@@ -88,7 +88,7 @@ async function run() {
 
       const outputs = await fs.readFileSync('./outputs.json', 'utf8')
       const json = JSON.parse(outputs)
-
+      console.log('json :', json)
       const cmd = Object.keys(json[STACK_ENV])
         .find((k) => { return k.indexOf('ConfigCommand') > -1 })
 
