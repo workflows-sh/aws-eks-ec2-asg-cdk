@@ -1,6 +1,6 @@
 version: "1"
 commands:
-  - name: setup:0.2.0
+  - name: setup:0.1.0
     run: ./node_modules/.bin/ts-node /ops/src/setup.ts
     description: "setup an environment"
     env:
@@ -11,7 +11,7 @@ commands:
         - AWS_ACCESS_KEY_ID
         - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
-  - name: deploy:0.2.0
+  - name: deploy:0.1.0
     run: ./node_modules/.bin/ts-node /ops/src/deploy.ts
     description: "deploy to an environment"
     env:
@@ -56,13 +56,13 @@ commands:
         - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
 pipelines:
-  - name: express-pipeline:1.0.2
-    description: build a release for deployment on fargate
+  - name: pdf-filler-pipeline:0.1.0
+    description: build a release for deployment
     env:
       static:
         - DEBIAN_FRONTEND=noninteractive
-        - ORG=workflows-sh
-        - REPO=sample-expressjs
+        - ORG=onecomply
+        - REPO=pdf-filler
         - AWS_REGION=us-west-1
       secrets:
         - GITHUB_TOKEN
@@ -70,10 +70,10 @@ pipelines:
         - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
     events:
-      - "github:workflows-sh/sample-expressjs:pull_request.opened"
+      - "github:onecomply/pdf-filler:pull_request.opened"
     jobs:
-      - name: sample-express-build-job
-        description: example build step
+      - name: pdf-filler-build-job
+        description: pdf-filler build step
         packages:
           - git
           - unzip
@@ -89,58 +89,3 @@ pipelines:
           - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO
           - docker build -f Dockerfile -t $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO:$REF .
           - docker push $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO:$REF
-  - name: react-pipeline:1.0.2
-    description: build a release for deployment on fargate
-    env:
-      static:
-        - DEBIAN_FRONTEND=noninteractive
-        - ORG=workflows-sh
-        - REPO=sample-react
-        - AWS_REGION=us-west-1
-      secrets:
-        - GITHUB_TOKEN
-        - AWS_ACCESS_KEY_ID
-        - AWS_SECRET_ACCESS_KEY
-        - AWS_ACCOUNT_NUMBER
-    events:
-      - "github:workflows-sh/sample-react:pull_request.opened"
-    jobs:
-      - name: sample-react-build-job
-        description: example build step
-        packages:
-          - git
-          - unzip
-          - python
-        steps:
-          - curl https://s3.amazonaws.com/aws-cli/awscli-bundle-1.18.200.zip -o awscli-bundle.zip
-          - unzip awscli-bundle.zip && ./awscli-bundle/install -b ~/bin/aws
-          - export PATH=~/bin:$PATH
-          - aws --version
-          - git clone https://$GITHUB_TOKEN:x-oauth-basic@github.com/$ORG/$REPO
-          - cd $REPO && ls -asl
-          - git fetch && git checkout $REF
-          - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO
-          - docker build -f Dockerfile -t $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO:$REF .
-          - docker push $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO:$REF
-services:
-  - name: sample-app:0.1.0
-    description: preview of sample app
-    run: node sample-app/app.js
-    port: [ '8080:8080' ]
-    domain: ""
-    env:
-      static:
-        - PORT=8080
-        - DB_HOST=localhost
-        - DB_PORT=3600
-        - DB_USER=fake
-      secrets:
-        - SLACK_SIGNING_SECRET
-        - SLACK_BOT_TOKEN
-    events:
-     - "github:kc-dot-io/sample-app:pull_request.merged"
-    trigger:
-     - build
-     - publish
-     - start
-

@@ -104,7 +104,7 @@ export default class Cluster extends cdk.Stack {
     });
     dbSecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(3306), 'MySQL access');
 
-    const db = new rds.ServerlessCluster(this, `${id}-db`, {
+    const db = new rds.ServerlessCluster(this, `dev-db`, {
       vpc: vpc,
       defaultDatabaseName: `${id}`,
       engine: rds.DatabaseClusterEngine.AURORA_MYSQL,

@@ -8,16 +8,19 @@ import * as rds from '@aws-cdk/aws-rds';
 interface StackProps {
   repo: string,
   tag: string,
+  env: string,
   key: string
 }
 
 export class Stack{
   public readonly repo: string
   public readonly tag: string
+  public readonly env: string
   public readonly key: string
   constructor(props?: StackProps) {
     this.repo = props?.repo ?? 'sample-app'
     this.tag = props?.tag ?? 'main'
+    this.env = props?.env ?? 'dev'
     this.key = props?.key ?? 'eks'
   }
   async initialize() {
@@ -46,6 +49,7 @@ export class Stack{
     const devService = new Service(app, `dev-${this.repo}-${this.key}`, {
       repo: this.repo,
       tag: this.tag,
+      env: this.env,
       db: dev.db,
       cluster: dev.cluster,
       redis: dev.redis,
@@ -57,6 +61,7 @@ export class Stack{
     const stgService = new Service(app, `stg-${this.repo}-${this.key}`, {
       repo: this.repo,
       tag: this.tag,
+      env: this.env,
       db: stg.db,
       cluster: stg.cluster,
       redis: stg.redis,
@@ -68,6 +73,7 @@ export class Stack{
     const prdService = new Service(app, `prd-${this.repo}-${this.key}`,{
       repo: this.repo,
       tag: this.tag,
+      env: this.env,
       db: prd.db,
       cluster: prd.cluster,
       redis: prd.redis,

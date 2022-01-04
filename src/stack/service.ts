@@ -12,14 +12,13 @@ import * as elasticache from './redis'
 import { createTemplates } from './templates';
 import * as k8s from '@kubernetes/client-node'
 import { sdk } from '@cto.ai/sdk'
-import { kubeconfig } from '../kubconfig';
 import ecsPatterns = require('@aws-cdk/aws-ecs-patterns')
 import { Stack } from '@aws-cdk/core';
-process.env.KUBE_CONFIG = kubeconfig
 
 interface StackProps {
   repo: string,
   tag: string,
+  env: string,
   cluster: eks.Cluster | undefined
   registry: ecr.Repository | undefined
   redis: any | undefined // todo @kc - fix this
@@ -90,9 +89,10 @@ export default class Service extends cdk.Stack {
 
 
     try {
-      if(process.env.KUBE_CONFIG) {
+      const KUBE_CONFIG = process.env[`${(this.props.env.toUpperCase())}_KUBE_CONFIG`]
+      if (KUBE_CONFIG) {
         const kc = new k8s.KubeConfig();
-        kc.loadFromString(process.env.KUBE_CONFIG)
+        kc.loadFromString(KUBE_CONFIG)
         const k8sApiCoreV1Api = kc.makeApiClient(k8s.CoreV1Api);
         const k8sApiAppsV1Api = kc.makeApiClient(k8s.AppsV1Api);
         const { deployment, service } = createTemplates(repo, tag)
