@@ -38,9 +38,9 @@ async function run() {
     })
 
   const STACKS:any = {
-    'dev': [`${STACK_REPO}`, STACK_ENV, `${STACK_ENV}-${STACK_REPO}`],
-    'stg': [`${STACK_REPO}`, STACK_ENV, `${STACK_ENV}-${STACK_REPO}`],
-    'prd': [`${STACK_REPO}`, STACK_ENV, `${STACK_ENV}-${STACK_REPO}`],
+    'dev': [`${STACK_REPO}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
+    'stg': [`${STACK_REPO}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
+    'prd': [`${STACK_REPO}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
     'all': [
       `${STACK_REPO}`,
       'dev', 'stg', 'prd',
@@ -72,6 +72,16 @@ async function run() {
   // synth.stdout.pipe(process.stdout)
   // synth.stderr.pipe(process.stdout)
 
+  await exec(`./node_modules/.bin/cdk bootstrap`, {
+    env: { 
+      ...process.env, 
+      STACK_ENV: STACK_ENV,
+      STACK_TYPE: STACK_TYPE, 
+      STACK_REPO: STACK_REPO, 
+      STACK_TAG: STACK_TAG
+    }
+  })
+
   const deploy = await exec(`./node_modules/.bin/cdk deploy ${STACKS[STACK_ENV].join(' ')} --outputs-file outputs.json`, {
     env: { 
       ...process.env, 
@@ -88,7 +98,7 @@ async function run() {
 
       const outputs = await fs.readFileSync('./outputs.json', 'utf8')
       const json = JSON.parse(outputs)
-      console.log('json :', json)
+
       const cmd = Object.keys(json[STACK_ENV])
         .find((k) => { return k.indexOf('ConfigCommand') > -1 })
 
