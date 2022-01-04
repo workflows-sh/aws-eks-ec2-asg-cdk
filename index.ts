@@ -12,11 +12,13 @@ console.log(`repo: ${STACK_REPO}`)
 console.log(`tag: ${STACK_TAG}`)
 
 async function run() {
+
   const stack = new Stack({
     repo: STACK_REPO,
     tag: STACK_TAG,
     key: STACK_TYPE
   });
+
   await stack.initialize()
 }
 
