@@ -16,9 +16,13 @@ import ecsPatterns = require('@aws-cdk/aws-ecs-patterns')
 import { Stack } from '@aws-cdk/core';
 
 interface StackProps {
-  repo: string,
-  tag: string,
-  env: string,
+  org: string
+  env: string
+  repo: string
+  tag: string
+  key: string
+  entropy: string
+
   cluster: eks.Cluster | undefined
   registry: ecr.Repository | undefined
   redis: any | undefined // todo @kc - fix this
@@ -27,10 +31,23 @@ interface StackProps {
  }
 
 export default class Service extends cdk.Stack {
-  
-  public readonly URL: string
-  public readonly props: StackProps
+
   public readonly id: string
+  public readonly org: string
+  public readonly env: string
+  public readonly repo: string
+  public readonly tag: string
+  public readonly key: string
+  public readonly entropy: string
+
+  public readonly URL: string
+
+  public readonly vpc: ec2.Vpc
+  public readonly cluster: eks.Cluster
+  public readonly registry: ecr.Repository
+  public readonly db: rds.ServerlessCluster
+  public readonly mq: sqs.Queue
+  public readonly redis: cdk.Construct
 
   constructor(scope: cdk.Construct, id: string, props?: StackProps) {
     super(scope, id)
@@ -50,13 +67,23 @@ export default class Service extends cdk.Stack {
     if(!props?.mq) {
       throw new Error('You must provide a mq for Service')
     }
-    this.props = props
+
     this.id = id
+    this.org = props?.org ?? 'cto-ai'
+    this.env = props?.env ?? 'dev'
+    this.key = props?.key ?? 'aws-eks-ec2-asg'
+    this.repo = props?.repo ?? 'sample-app'
+    this.tag = props?.tag ?? 'main'
+    this.entropy = props?.entropy ?? '01012022'
+
+    this.cluster = props.cluster
+    this.registry = props.registry
+    this.db = props.db
+    this.redis = props.redis
+    this.mq = props.mq
   }
 
   async initialize() {
-    const repo = this.props?.repo ?? 'sample-app'
-    const tag = this.props?.tag ?? 'main'
 
     // S3
     const bucket = new s3.Bucket(this, `${this.id}-bucket`, {
@@ -84,24 +111,30 @@ export default class Service extends cdk.Stack {
     });
 
     const db_secrets = sm.Secret.fromSecretAttributes(this, 'host', {
-      secretArn: this.props?.db?.secret?.secretArn
+      secretArn: this.db?.secret?.secretArn
     });
 
-
     try {
-      const KUBE_CONFIG = process.env[`${(this.props.env.toUpperCase())}_KUBE_CONFIG`]
+
+      const KUBE_KEY = `${this.env}_${this.key}_KUBE_CONFIG`.replace('-','_').toUpperCase()
+      const KUBE_CONFIG = process.env[KUBE_KEY]
+
       if (KUBE_CONFIG) {
         const kc = new k8s.KubeConfig();
+
         kc.loadFromString(KUBE_CONFIG)
         const k8sApiCoreV1Api = kc.makeApiClient(k8s.CoreV1Api);
         const k8sApiAppsV1Api = kc.makeApiClient(k8s.AppsV1Api);
-        const { deployment, service } = createTemplates(repo, tag)
+        const { deployment, service } = createTemplates(this.repo, this.tag)
+
         const deploymentExists = await k8sApiAppsV1Api.readNamespacedDeployment(deployment.metadata.name, 'default').catch((err) => {
           return false
         })
+
         const serviceExists = await k8sApiCoreV1Api.readNamespacedService(service.metadata.name, 'default').catch((err) => {
           return false
         })
+
         if (deploymentExists) {
           await k8sApiAppsV1Api.patchNamespacedDeployment(deployment.metadata.name, 'default', deployment, undefined, undefined, undefined, undefined, { headers: { 'content-type': 'application/strategic-merge-patch+json' }})
         } else {
