@@ -1,3 +1,4 @@
+import fs from 'fs'
 import util from 'util';
 import { ux, sdk } from '@cto.ai/sdk';
 import { exec as oexec } from 'child_process';
@@ -37,10 +38,12 @@ async function run() {
     })
 
   const STACKS:any = {
-    'dev': [`${STACK_ENV}-${STACK_REPO}`],
-    'stg': [`${STACK_ENV}-${STACK_REPO}`],
-    'prd': [`${STACK_ENV}-${STACK_REPO}`],
+    'dev': [`${STACK_REPO}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
+    'stg': [`${STACK_REPO}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
+    'prd': [`${STACK_REPO}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
     'all': [
+      `${STACK_REPO}`,
+      'dev', 'stg', 'prd',
       `dev-${STACK_REPO}`,
       `stg-${STACK_REPO}`,
       `stg-${STACK_REPO}`
@@ -64,7 +67,7 @@ async function run() {
   // })
   // // synth.stdout.pipe(process.stdout)
   // // synth.stderr.pipe(process.stdout)
-  const deploy = await exec(`npm run cdk deploy ${STACKS[STACK_ENV].join(' ')}`, {
+  const deploy = await exec(`./node_modules/.bin/cdk deploy ${STACKS[STACK_ENV].join(' ')} --outputs-file outputs.json`, {
     env: { 
       ...process.env, 
       STACK_TYPE: STACK_TYPE, 
@@ -72,19 +75,30 @@ async function run() {
       STACK_REPO: STACK_REPO, 
       STACK_TAG: STACK_TAG
     }
-  }).catch((err) => {
+  })
+  .then(async () => {
+    try {
+
+      const outputs = await fs.readFileSync('./outputs.json', 'utf8')
+      const json = JSON.parse(outputs)
+      console.log(json)
+      const cmd = Object.keys(json[`${STACK_ENV}-${STACK_TYPE}`])
+        .find((k) => { return k.indexOf('ConfigCommand') > -1 })
+
+      console.log('Running: ', json[`${STACK_ENV}-${STACK_TYPE}`][cmd!])
+      const aws = await exec(json[`${STACK_ENV}-${STACK_TYPE}`][cmd!], process.env)
+        .catch(err => { throw err })
+
+      const config = await pexec('cat ~/.kube/config')
+      console.log(config.stdout)
+
+    } catch (e) {
+      throw e
+    }
+  })
+  .catch((err) => {
     console.log(err)
     process.exit(1)
-  })
-
-  sdk.track([], {
-    event_name: 'deployment',
-    event_action: 'succeeded',
-    environment: STACK_ENV,
-    repo: STACK_REPO,
-    branch: STACK_TAG,
-    commit: STACK_TAG,
-    image: STACK_TAG
   })
 }
 

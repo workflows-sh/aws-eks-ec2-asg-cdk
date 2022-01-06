@@ -26,7 +26,7 @@ export const createTemplates = function(appName: string, tag: string) {
             image: `${process.env.AWS_ACCOUNT_NUMBER}.dkr.ecr.${process.env.AWS_REGION}.amazonaws.com/${appName}:${tag}`,
             name: `${appName}`,
             ports: [{
-              containerPort: 3000
+              containerPort: 5000
             }]
           }]
         }
@@ -49,7 +49,7 @@ export const createTemplates = function(appName: string, tag: string) {
       ports: [{
         'protocol': 'TCP',
         'port': 80,
-        'targetPort': 3000
+        'targetPort': 5000
       }],
       type: 'LoadBalancer'
     }

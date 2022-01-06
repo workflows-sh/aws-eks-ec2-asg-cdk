@@ -14,6 +14,8 @@ import * as k8s from '@kubernetes/client-node'
 import { sdk } from '@cto.ai/sdk'
 import ecsPatterns = require('@aws-cdk/aws-ecs-patterns')
 import { Stack } from '@aws-cdk/core';
+import {kubeconfig} from './kubeconfig'
+process.env.KUBE_CONFIG = kubeconfig
 
 interface StackProps {
   repo: string,
@@ -89,7 +91,79 @@ export default class Service extends cdk.Stack {
 
 
     try {
-      const KUBE_CONFIG = process.env[`${(this.props.env.toUpperCase())}_KUBE_CONFIG`]
+      // this.props.cluster?.addManifest(`${this.props.repo}-deployment`, {
+      //   apiVersion: 'apps/v1',
+      //   kind: 'Deployment',
+      //   metadata: {
+      //     name: this.props.repo,
+      //     labels: {
+      //       'app.kubernetes.io/name': `load-balancer-${this.props.repo}`
+      //     },
+      //   },
+      //   spec: {
+      //     replicas: 1,
+      //     selector: {
+      //       matchLabels: {
+      //         'app.kubernetes.io/name': `load-balancer-${this.props.repo}`
+      //       }
+      //     },
+      //     template: {
+      //       metadata: {
+      //         labels: {
+      //           'app.kubernetes.io/name': `load-balancer-${this.props.repo}`
+      //         },
+      //       },
+      //       spec: {
+      //         containers: [{
+      //           image: `${process.env.AWS_ACCOUNT_NUMBER}.dkr.ecr.${process.env.AWS_REGION}.amazonaws.com/${this.props.repo}:${this.props.tag}`,
+      //           name: `${this.props.repo}`,
+      //           ports: [{
+      //             containerPort: 5000
+      //           }],
+      //           env: [{
+      //             name: 'PORT',
+      //             value: 5000
+      //           },
+      //           {
+      //             name: 'AWS_ID',
+      //             value: process.env.AWS_ACCESS_KEY_ID
+      //           },
+      //           {
+      //             name: 'AWS_SECRET',
+      //             value: process.env.AWS_SECRET_ACCESS_KEY
+      //           },
+      //           {
+      //             name: 'COMPANY_BUCKET',
+      //             value: 'cto-ai'
+      //           }]
+      //         }]
+      //       }
+      //     }
+      //   }
+      // })
+      // this.props.cluster?.addManifest(`${this.props.repo}-service`, {
+      //   apiVersion: 'v1',
+      //   kind: 'Service',
+      //   metadata: {
+      //     name: `${this.props.repo}-service`,
+      //     labels: {
+      //       'app.kubernetes.io/name': `load-balancer-${this.props.repo}`
+      //     },
+      //   },
+      //   spec: {
+      //     selector: {
+      //       'app.kubernetes.io/name': `load-balancer-${this.props.repo}`
+      //     },
+      //     ports: [{
+      //       'protocol': 'TCP',
+      //       'port': 80,
+      //       'targetPort': 5000
+      //     }],
+      //     type: 'LoadBalancer'
+      //   }
+      // })
+      // const KUBE_CONFIG = process.env[`${(this.props.env.toUpperCase())}_KUBE_CONFIG`]
+      const KUBE_CONFIG = process.env.KUBE_CONFIG
       if (KUBE_CONFIG) {
         const kc = new k8s.KubeConfig();
         kc.loadFromString(KUBE_CONFIG)

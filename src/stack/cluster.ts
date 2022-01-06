@@ -106,7 +106,7 @@ export default class Cluster extends cdk.Stack {
 
     const db = new rds.ServerlessCluster(this, `dev-db`, {
       vpc: vpc,
-      defaultDatabaseName: `${id}`,
+      defaultDatabaseName: `dev`,
       engine: rds.DatabaseClusterEngine.AURORA_MYSQL,
       scaling: { autoPause: cdk.Duration.seconds(0) },
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE },

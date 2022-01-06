@@ -22,6 +22,7 @@ commands:
         - AWS_ACCESS_KEY_ID
         - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
+        - DEV_KUBE_CONFIG
   - name: destroy:0.1.0
     run: ./node_modules/.bin/ts-node /ops/src/destroy.ts
     description: "destroy an environment"
@@ -56,13 +57,14 @@ commands:
         - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
 pipelines:
-  - name: pdf-filler-pipeline:0.1.0
+  - name: pdf-filler-pipeline:0.1.1
     description: build a release for deployment
     env:
       static:
         - DEBIAN_FRONTEND=noninteractive
         - ORG=onecomply
         - REPO=pdf-filler
+        - REF=PROD-1
         - AWS_REGION=us-west-1
       secrets:
         - GITHUB_TOKEN
@@ -70,7 +72,7 @@ pipelines:
         - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
     events:
-      - "github:onecomply/pdf-filler:pull_request.opened"
+      - "github:onecomply/pdf-filler:pull_request.synchronize"
     jobs:
       - name: pdf-filler-build-job
         description: pdf-filler build step
@@ -78,14 +80,17 @@ pipelines:
           - git
           - unzip
           - python
+        bind:
+          - /Users/campbell/Development/hackCapital/ops/client/onecomply/pdf-filler:/ops/application
         steps:
           - curl https://s3.amazonaws.com/aws-cli/awscli-bundle-1.18.200.zip -o awscli-bundle.zip
           - unzip awscli-bundle.zip && ./awscli-bundle/install -b ~/bin/aws
           - export PATH=~/bin:$PATH
           - aws --version
-          - git clone https://$GITHUB_TOKEN:x-oauth-basic@github.com/$ORG/$REPO
-          - cd $REPO && ls -asl
-          - git fetch && git checkout $REF
+          # - git clone https://$GITHUB_TOKEN:x-oauth-basic@github.com/$ORG/$REPO
+          # - cd $REPO && ls -asl
+          - cd application && ls -asl
+          # - git fetch && git checkout $REF
           - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO
           - docker build -f Dockerfile -t $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO:$REF .
           - docker push $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO:$REF
