@@ -27,6 +27,22 @@ export const createTemplates = function(appName: string, tag: string) {
             name: `${appName}`,
             ports: [{
               containerPort: 5000
+            }],
+            envs: [{
+              name: 'PORT',
+              value: 5000
+            },
+            {
+              name: 'AWS_ID',
+              value: process.env.AWS_ACCESS_KEY_ID
+            },
+            {
+              name: 'AWS_SECRET',
+              value: process.env.AWS_SECRET_ACCESS_KEY
+            },
+            {
+              name: 'COMPANY_BUCKET',
+              value: 'cto-ai'
             }]
           }]
         }
