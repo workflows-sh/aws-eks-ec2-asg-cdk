@@ -11,6 +11,10 @@ commands:
         - AWS_ACCESS_KEY_ID
         - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
+      configs:
+        - DEV_AWS_EKS_EC2_ASG_STATE
+        - STG_AWS_EKS_EC2_ASG_STATE
+        - PRD_AWS_EKS_EC2_ASG_STATE
   - name: deploy:0.1.0
     run: ./node_modules/.bin/ts-node /ops/src/deploy.ts
     description: "deploy to an environment"
@@ -22,6 +26,10 @@ commands:
         - AWS_ACCESS_KEY_ID
         - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
+      configs:
+        - DEV_AWS_EKS_EC2_ASG_STATE
+        - STG_AWS_EKS_EC2_ASG_STATE
+        - PRD_AWS_EKS_EC2_ASG_STATE
   - name: destroy:0.1.0
     run: ./node_modules/.bin/ts-node /ops/src/destroy.ts
     description: "destroy an environment"

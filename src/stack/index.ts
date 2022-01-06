@@ -114,6 +114,9 @@ export class Stack{
       registry: registry.repository
     })
     await prdService.initialize()
+
+    app.synth()
+
   }
 }
 

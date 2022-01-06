@@ -116,13 +116,13 @@ export default class Service extends cdk.Stack {
 
     try {
 
-      const KUBE_KEY = `${this.env}_${this.key}_KUBE_CONFIG`.replace('-','_').toUpperCase()
-      const KUBE_CONFIG = process.env[KUBE_KEY]
+      const KUBE_CONFIG = process.env.KUBE_CONFIG
 
       if (KUBE_CONFIG) {
-        const kc = new k8s.KubeConfig();
 
+        const kc = new k8s.KubeConfig();
         kc.loadFromString(KUBE_CONFIG)
+
         const k8sApiCoreV1Api = kc.makeApiClient(k8s.CoreV1Api);
         const k8sApiAppsV1Api = kc.makeApiClient(k8s.AppsV1Api);
         const { deployment, service } = createTemplates(this.repo, this.tag)
