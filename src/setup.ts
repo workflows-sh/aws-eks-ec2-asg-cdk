@@ -92,11 +92,6 @@ async function run() {
       const config = await pexec('cat ~/.kube/config')
       //console.log(config.stdout)
 
-      // save the KubeConfig to secret store
-      // WIP: this still will require AWS_* in process.env later I think
-      const KUBE_SECRET_KEY = `${STACK_ENV}_${STACK_TYPE}_KUBE_CONFIG`.toUpperCase().replace(/-/g,'_')
-      sdk.setSecret(`${KUBE_SECRET_KEY}`, config.stdout)
-
     } catch (e) {
       throw e
     }
