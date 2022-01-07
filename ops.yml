@@ -63,6 +63,25 @@ commands:
         - AWS_ACCESS_KEY_ID
         - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
+  - name: vault:0.1.0
+    run: ./node_modules/.bin/ts-node /ops/src/vault.ts
+    description: "manage secrets vault"
+    env:
+      static:
+        - STACK_TYPE=aws-ecs-fargate
+        - AWS_REGION=us-east-1
+      secrets:
+        - AWS_ACCESS_KEY_ID
+        - AWS_SECRET_ACCESS_KEY
+        - AWS_ACCOUNT_NUMBER
+    help:
+      usage: ops run vault <sub-cmd> <--key> <--value>
+      arguments: 
+        init: 'init the environments vault'
+        create: 'set a key in the enviroment vault'
+        list: 'list keys in the environment vault'
+        remove: ' remove a specific key in the environment vault'
+        destroy: 'destroy the environment vault'
 pipelines:
   - name: pdf-filler-pipeline:0.1.0
     description: build a release for deployment
