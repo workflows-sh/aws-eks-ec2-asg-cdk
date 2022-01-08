@@ -9,7 +9,7 @@ async function run() {
   const STACK_TYPE = process.env.STACK_TYPE || 'aws-eks-ec2-asg';
   const STACK_TEAM = process.env.OPS_TEAM_NAME || 'private'
 
-  sdk.log(`🛠 Loading up ${STACK_TYPE} stack...`)
+  sdk.log(`🛠 Loading the ${ux.color.white(STACK_TYPE)} stack for the ${ux.colors.white(STACK_TEAM)}]...`)
   
   const { STACK_ENV } = await ux.prompt<{
     STACK_ENV: string
@@ -44,10 +44,14 @@ async function run() {
     'prd': [`${STACK_REPO}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
     'all': [
       `${STACK_REPO}`,
-      'dev', 'stg', 'prd',
-      `dev-${STACK_REPO}`,
-      `stg-${STACK_REPO}`,
-      `stg-${STACK_REPO}`
+
+      `dev-${STACK_TYPE}`,
+      `stg-${STACK_TYPE}`,
+      `prd-${STACK_TYPE}`,
+
+      `dev-${STACK_REPO}-${STACK_TYPE}`,
+      `stg-${STACK_REPO}-${STACK_TYPE}`,
+      `prd-${STACK_REPO}-${STACK_TYPE}`
     ]
   }
 
@@ -58,7 +62,7 @@ async function run() {
   sdk.log(`\n📦 Setting up the ${ux.colors.white(STACK_TYPE)} ${ux.colors.white(STACK_ENV)} stack for ${ux.colors.white(STACK_TEAM)} team...`)
   await exec(`./node_modules/.bin/cdk bootstrap`, { env: process.env })
 
-  const deploy = await exec(`./node_modules/.bin/cdk deploy ${STACKS[STACK_ENV].join(' ')} --outputs-file outputs.json`, {
+  await exec(`./node_modules/.bin/cdk deploy ${STACKS[STACK_ENV].join(' ')} --outputs-file outputs.json`, {
     env: { 
       ...process.env, 
       STACK_ENV: STACK_ENV,
@@ -113,6 +117,5 @@ async function exec(cmd, env?: any | null) {
     child.on('close', (code) => { code ? reject(child.stderr) : resolve(child.stdout) })
   })
 }
-
 
 run()

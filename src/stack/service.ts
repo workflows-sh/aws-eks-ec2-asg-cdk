@@ -40,14 +40,14 @@ export default class Service extends cdk.Stack {
   public readonly key: string
   public readonly entropy: string
 
-  public readonly URL: string
-
   public readonly vpc: ec2.Vpc
   public readonly cluster: eks.Cluster
   public readonly registry: ecr.Repository
   public readonly db: rds.ServerlessCluster
   public readonly mq: sqs.Queue
-  public readonly redis: cdk.Construct
+  public readonly redis: any | undefined // todo @kc - fix this
+
+  public URL: string
 
   constructor(scope: cdk.Construct, id: string, props?: StackProps) {
     super(scope, id)

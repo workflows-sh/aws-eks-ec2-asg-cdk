@@ -4,7 +4,7 @@ const STACK_ENV = process.env.STACK_ENV || 'dev'
 const STACK_ORG = process.env.STACK_ORG || 'cto-ai'
 const STACK_REPO = process.env.STACK_REPO || 'sample-app'
 const STACK_TAG = process.env.STACK_TAG || 'main'
-const STACK_TYPE = process.env.STACK_TYPE || 'sample-app'
+const STACK_TYPE = process.env.STACK_TYPE || 'aws-eks-ec2-asg'
 const STACK_ENTROPY = process.env.STACK_ENTROPY || '01012022'
 
 async function run() {
