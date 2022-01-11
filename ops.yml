@@ -91,6 +91,7 @@ pipelines:
         - ORG=onecomply
         - REPO=pdf-filler
         - AWS_REGION=us-west-1
+        - STACK_TYPE=aws-eks-ec2-asg
       secrets:
         - GITHUB_TOKEN
         - AWS_ACCESS_KEY_ID
@@ -114,5 +115,5 @@ pipelines:
           - cd $REPO && ls -asl
           - git fetch && git checkout $REF
           - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO
-          - docker build -f Dockerfile -t $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO:$REF .
-          - docker push $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO:$REF
+          - docker build -f Dockerfile -t $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO-$STACK_TYPE:$REF .
+          - docker push $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO-$STACK_TYPE:$REF

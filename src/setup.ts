@@ -39,11 +39,11 @@ async function run() {
     })
 
   const STACKS:any = {
-    'dev': [`${STACK_REPO}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
-    'stg': [`${STACK_REPO}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
-    'prd': [`${STACK_REPO}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
+    'dev': [`${STACK_REPO}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
+    'stg': [`${STACK_REPO}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
+    'prd': [`${STACK_REPO}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
     'all': [
-      `${STACK_REPO}`,
+      `${STACK_REPO}-${STACK_TYPE}`,
 
       `dev-${STACK_TYPE}`,
       `stg-${STACK_TYPE}`,
@@ -76,7 +76,6 @@ async function run() {
 
     try {
 
-      console.log(`\n🔒 Syncing infrastructure state with ${ux.colors.white(STACK_TEAM)} team...`)
 
       const json = await fs.readFileSync('./outputs.json', 'utf8')
       const outputs = JSON.parse(json)
@@ -85,18 +84,20 @@ async function run() {
       const STATE_KEY = `${STACK_ENV}-${STACK_TYPE}`
       const cmd = Object.keys(outputs[STATE_KEY])
         .find((k) => { return k.indexOf('ConfigCommand') > -1 })
+      const cluster = Object.keys(outputs[STATE_KEY])
+        .find((k) => { return k.indexOf('ClusterArn') > -1 })
 
-      console.log('Running: ', outputs[STATE_KEY][cmd!])
+      console.log(`\n🔒 Configuring a secure connection with ${ux.colors.white(cluster || 'cluster')}:`)
       const aws = await exec(outputs[STATE_KEY][cmd!], process.env)
         .catch(err => { throw err })
 
-      console.log(`\n${ux.colors.white('⚠️  Run this command to get your Kuberenetes Config locally')}`)
+      console.log(`${ux.colors.white('⚠️  Run this command to setup your Kuberenetes configuration locally:')}`)
       console.log(ux.colors.green(outputs[STATE_KEY][cmd!]))
 
       const config = await pexec('cat ~/.kube/config')
       // console.log(config.stdout)
       
-      console.log(`\n⚡️ Confirming connection to ${ux.colors.white(outputs[STATE_KEY].cluster)}:`)
+      console.log(`\n⚡️ Confirming connection to ${ux.colors.white(cluster || 'cluster')}:`)
       await exec('kubectl get nodes')
         .catch(err => console.log(err))
 
@@ -107,8 +108,9 @@ async function run() {
 
       }
 
-      console.log(`\n✅ Saved the following state in your ${ux.colors.white(STACK_TEAM)} config as ${ux.colors.white(CONFIG_KEY)}:`)
+      console.log(`\n🔒 Syncing infrastructure state with ${ux.colors.white(STACK_TEAM)} team...`)
       sdk.setConfig(CONFIG_KEY, JSON.stringify(outputs))
+      console.log(`✅ Saved the following state in your ${ux.colors.white(STACK_TEAM)} config as ${ux.colors.white(CONFIG_KEY)}:`)
       console.log(outputs)
 
       console.log('\n🚀 Deploying a hello world application to cluster to finalize setup...')
