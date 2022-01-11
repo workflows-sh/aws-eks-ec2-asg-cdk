@@ -9,7 +9,7 @@ async function run() {
   const STACK_TYPE = process.env.STACK_TYPE || 'aws-eks-ec2-asg';
   const STACK_TEAM = process.env.OPS_TEAM_NAME || 'private'
 
-  sdk.log(`🛠 Loading the ${ux.color.white(STACK_TYPE)} stack for the ${ux.colors.white(STACK_TEAM)}]...`)
+  sdk.log(`🛠  Loading the ${ux.colors.white(STACK_TYPE)} stack for the ${ux.colors.white(STACK_TEAM)}...`)
   
   const { STACK_ENV } = await ux.prompt<{
     STACK_ENV: string
@@ -76,11 +76,11 @@ async function run() {
 
     try {
 
+      console.log(`\n🔒 Syncing infrastructure state with ${ux.colors.white(STACK_TEAM)} team...`)
+
       const json = await fs.readFileSync('./outputs.json', 'utf8')
       const outputs = JSON.parse(json)
-
-      const CONFIG_KEY = `${STACK_ENV}_${STACK_TYPE}_STATE`.toUpperCase().replace(/-/g,'_')
-      sdk.setConfig(CONFIG_KEY, JSON.stringify(outputs))
+      // console.log(outputs)
 
       const STATE_KEY = `${STACK_ENV}-${STACK_TYPE}`
       const cmd = Object.keys(outputs[STATE_KEY])
@@ -90,11 +90,35 @@ async function run() {
       const aws = await exec(outputs[STATE_KEY][cmd!], process.env)
         .catch(err => { throw err })
 
-      console.log(ux.colors.white('⚠️  Run this command to get your Kuberenetes Config locally'))
+      console.log(`\n${ux.colors.white('⚠️  Run this command to get your Kuberenetes Config locally')}`)
       console.log(ux.colors.green(outputs[STATE_KEY][cmd!]))
 
       const config = await pexec('cat ~/.kube/config')
-      //console.log(config.stdout)
+      // console.log(config.stdout)
+      
+      console.log(`\n⚡️ Confirming connection to ${ux.colors.white(outputs[STATE_KEY].cluster)}:`)
+      await exec('kubectl get nodes')
+        .catch(err => console.log(err))
+
+      const CONFIG_KEY = `${STACK_ENV}_${STACK_TYPE}_STATE`.toUpperCase().replace(/-/g,'_')
+      if(!process.env[CONFIG_KEY]) {
+
+        // install helm charts here
+
+      }
+
+      console.log(`\n✅ Saved the following state in your ${ux.colors.white(STACK_TEAM)} config as ${ux.colors.white(CONFIG_KEY)}:`)
+      sdk.setConfig(CONFIG_KEY, JSON.stringify(outputs))
+      console.log(outputs)
+
+      console.log('\n🚀 Deploying a hello world application to cluster to finalize setup...')
+      await exec('kubectl apply -f src/kubectl/hello-world/')
+        .catch(err => console.log(err))
+
+      console.log('\n✅ Deployed. Load Balancer is provisioning...')
+      console.log(`👀 Check your ${ux.colors.white('AWS')} dashboard or Lens for status.`)
+      console.log(`\n${ux.colors.italic.white('Happy Workflowing!')}\n`)
+
 
     } catch (e) {
       throw e
