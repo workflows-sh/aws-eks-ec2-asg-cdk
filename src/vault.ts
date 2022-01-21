@@ -1,4 +1,3 @@
-import fs from 'fs'
 import util from 'util';
 import { ux, sdk } from '@cto.ai/sdk';
 import { exec as oexec } from 'child_process';
@@ -7,11 +6,15 @@ const pexec = util.promisify(oexec);
 const ARGS = process.argv.slice(3);
 const OPTIONS = require('simple-argv')
 
+const STACK_TYPE = process.env.STACK_TYPE || 'aws-eks-ec2-asg';
+const STACK_TEAM = process.env.OPS_TEAM_NAME || 'private'
+
+
+
 async function init() {
 
-  const STACK_TYPE = process.env.STACK_TYPE || 'aws-eks-ec2-asg';
 
-  sdk.log(`🛠 Loading up ${STACK_TYPE} stack...`)
+  sdk.log(`🛠 Loading the ${ux.colors.white(STACK_TYPE)} stack for the ${ux.colors.white(STACK_TEAM)} team...`)
 
   const { STACK_ENV } = await ux.prompt<{
     STACK_ENV: string
@@ -25,9 +28,30 @@ async function init() {
   try {
 
     const secrets = {}
-    const KEY = `${STACK_ENV.toUpperCase()}_VAULT`
-    const vault = await pexec(`aws secretsmanager create-secret --name ${KEY} --description "The ${STACK_ENV} secret vault" --secret-string "${JSON.stringify(secrets)}"`) 
-    sdk.setConfig(`${KEY}`, JSON.parse(vault.stdout).ARN)
+    const PREFIX = `${STACK_ENV}_${STACK_TYPE}`.replace(/-/g, '_').toUpperCase()
+    const VAULT_KEY = `${STACK_ENV}-${STACK_TYPE}`
+    const STATE_KEY = `${PREFIX}_STATE`
+
+    const STATE = process.env[`${STATE_KEY}`]
+    const outputs = JSON.parse(STATE || '')
+
+    const cmd = Object.keys(outputs[VAULT_KEY])
+      .find((k) => { return k.indexOf('ConfigCommand') > -1 })
+    const cluster = Object.keys(outputs[VAULT_KEY])
+      .find((k) => { return k.indexOf('ClusterArn') > -1 })
+
+    console.log(`\n🔒 Configuring a secure connection with ${ux.colors.white(cluster || 'cluster')}:`)
+    const aws = await exec(outputs[VAULT_KEY][cmd!], process.env)
+      .catch(err => { throw err })
+
+    const config = await pexec('cat ~/.kube/config')
+    //console.log(config.stdout)
+    
+    console.log(`\n⚡️ Confirming connection to ${ux.colors.white(cluster || 'cluster')}:`)
+    await exec('kubectl get nodes')
+      .catch(err => console.log(err))
+
+    const vault = await pexec(`kubectl create secret generic ${VAULT_KEY} --from-literal=PORT='3000'`) 
     console.log(vault.stdout)
 
   } catch (e) {
@@ -38,9 +62,7 @@ async function init() {
 
 async function create() {
 
-  const STACK_TYPE = process.env.STACK_TYPE || 'aws-eks-ec2-asg';
-
-  sdk.log(`🛠 Loading up ${STACK_TYPE} stack...`)
+  sdk.log(`🛠 Loading the ${ux.colors.white(STACK_TYPE)} stack for the ${ux.colors.white(STACK_TEAM)} team...`)
 
   const { STACK_ENV } = await ux.prompt<{
     STACK_ENV: string
@@ -53,30 +75,57 @@ async function create() {
 
   try {
 
-    const KEY = `${STACK_ENV.toUpperCase()}_VAULT`
+    const PREFIX = `${STACK_ENV}_${STACK_TYPE}`.replace(/-/g, '_').toUpperCase()
+    const VAULT_KEY = `${STACK_ENV}-${STACK_TYPE}`
+    const STATE_KEY = `${PREFIX}_STATE`
 
     const { confirmation } = await ux.prompt<{
       confirmation: boolean
     }>({
       type: 'confirm',
       name: 'confirmation',
-      message: `Are you sure you want to set ${OPTIONS.k} to ${OPTIONS.v} in the ${KEY}?`
+      message: `Are you sure you want to set ${OPTIONS.k} to ${OPTIONS.v} in the ${VAULT_KEY}?`
     })
 
     if(!confirmation) {
       return console.log('Exiting...')
     }
 
-    const vault_id = await sdk.getConfig(KEY)
-    const vault = await pexec(`aws secretsmanager get-secret-value --secret-id ${vault_id}`)
-    const data = JSON.parse(vault.stdout); 
-    const secrets = JSON.parse(data.SecretString)
+    const STATE = process.env[`${STATE_KEY}`]
+    const outputs = JSON.parse(STATE || '')
 
-    console.log(`🔐 Setting ${OPTIONS.k} to ${OPTIONS.v} on the ${KEY}`)
-    secrets[OPTIONS.k] = OPTIONS.v
- 
-    const update = await pexec(`aws secretsmanager update-secret --secret-id ${vault_id} --description "The ${STACK_ENV} secret vault" --secret-string '${JSON.stringify(secrets)}'`) 
-    console.log(update.stdout)
+    const cmd = Object.keys(outputs[VAULT_KEY])
+      .find((k) => { return k.indexOf('ConfigCommand') > -1 })
+    const cluster = Object.keys(outputs[VAULT_KEY])
+      .find((k) => { return k.indexOf('ClusterArn') > -1 })
+
+    console.log(`\n🔒 Configuring a secure connection with ${ux.colors.white(cluster || 'cluster')}:`)
+    const aws = await exec(outputs[VAULT_KEY][cmd!], process.env)
+      .catch(err => { throw err })
+
+    const config = await pexec('cat ~/.kube/config')
+    //console.log(config.stdout)
+    
+    console.log(`\n⚡️ Confirming connection to ${ux.colors.white(cluster || 'cluster')}:`)
+    await exec('kubectl get nodes')
+      .catch(err => console.log(err))
+
+    const vault = await pexec(`kubectl get secret ${VAULT_KEY} -o json`) 
+    //console.log(vault.stdout)
+
+    const encode = (str: string):string => Buffer.from(str, 'binary').toString('base64');
+    const data = JSON.parse(vault.stdout); 
+
+    console.log(`\n🔐 Setting ${OPTIONS.k} to ${OPTIONS.v} on the ${VAULT_KEY} with type ${typeof OPTIONS.v}`)
+    data.data[OPTIONS.k] = encode(OPTIONS.v.toString())
+
+    // not sure why but k8s breaks annotations json with \n
+    // so delete last applied annotations before applying
+    delete data?.metadata?.annotations
+    const payload = JSON.stringify(data)
+    await pexec(`echo '${payload}' | kubectl apply -f -`) 
+    console.log(`✅ ${OPTIONS.k} set to ${OPTIONS.v} in the ${VAULT_KEY} vault\n`)
+    
   } catch (e) {
     console.log('there was an error:', e)
   }
@@ -85,9 +134,7 @@ async function create() {
 
 async function list() {
 
-  const STACK_TYPE = process.env.STACK_TYPE || 'aws-eks-ec2-asg';
-
-  sdk.log(`🛠 Loading up ${STACK_TYPE} stack...`)
+  sdk.log(`🛠 Loading the ${ux.colors.white(STACK_TYPE)} stack for the ${ux.colors.white(STACK_TEAM)} team...`)
 
   const { STACK_ENV } = await ux.prompt<{
     STACK_ENV: string
@@ -100,17 +147,40 @@ async function list() {
 
   try {
 
-    const KEY = `${STACK_ENV.toUpperCase()}_VAULT`
-    const vault_id = await sdk.getConfig(KEY)
-    const vault = await pexec(`aws secretsmanager get-secret-value --secret-id ${vault_id}`)
+    const PREFIX = `${STACK_ENV}_${STACK_TYPE}`.replace(/-/g, '_').toUpperCase()
+    const VAULT_KEY = `${STACK_ENV}-${STACK_TYPE}`
+    const STATE_KEY = `${PREFIX}_STATE`
+
+    const STATE = process.env[`${STATE_KEY}`]
+    const outputs = JSON.parse(STATE || '')
+
+    const cmd = Object.keys(outputs[VAULT_KEY])
+      .find((k) => { return k.indexOf('ConfigCommand') > -1 })
+    const cluster = Object.keys(outputs[VAULT_KEY])
+      .find((k) => { return k.indexOf('ClusterArn') > -1 })
+
+    console.log(`\n🔒 Configuring a secure connection with ${ux.colors.white(cluster || 'cluster')}:`)
+    const aws = await exec(outputs[VAULT_KEY][cmd!], process.env)
+      .catch(err => { throw err })
+
+    const config = await pexec('cat ~/.kube/config')
+    //console.log(config.stdout)
+    
+    console.log(`\n⚡️ Confirming connection to ${ux.colors.white(cluster || 'cluster')}:`)
+    await exec('kubectl get nodes')
+      .catch(err => console.log(err))
+
+    const vault = await pexec(`kubectl get secret ${VAULT_KEY} -o json`) 
+    //console.log(vault.stdout)
 
     const data = JSON.parse(vault.stdout); 
-    const secrets = JSON.parse(data.SecretString)
+    const secrets = data.data
 
-    console.log(`🔐 ${KEY} has the following secrets: \n`)
+    console.log(`\n🔐 ${VAULT_KEY} has the following secrets: \n`)
+    const decode = (str: string):string => Buffer.from(str, 'base64').toString('binary');
 
     for(let k in secrets) {
-      console.log(`${k}: ${secrets[k]}`)
+      console.log(`${ux.colors.bold(k)}: ${ux.colors.white(decode(secrets[k]))}`)
     }
 
     console.log("")
@@ -124,9 +194,7 @@ async function list() {
 
 async function remove() {
 
-  const STACK_TYPE = process.env.STACK_TYPE || 'aws-eks-ec2-asg';
-
-  sdk.log(`🛠 Loading up ${STACK_TYPE} stack...`)
+  sdk.log(`🛠 Loading the ${ux.colors.white(STACK_TYPE)} stack for the ${ux.colors.white(STACK_TEAM)} team...`)
 
   const { STACK_ENV } = await ux.prompt<{
     STACK_ENV: string
@@ -139,29 +207,57 @@ async function remove() {
 
   try {
 
+    const PREFIX = `${STACK_ENV}_${STACK_TYPE}`.replace(/-/g, '_').toUpperCase()
+    const VAULT_KEY = `${STACK_ENV}-${STACK_TYPE}`
+    const STATE_KEY = `${PREFIX}_STATE`
+
     const { confirmation } = await ux.prompt<{
       confirmation: boolean
     }>({
       type: 'confirm',
       name: 'confirmation',
-      message: `Are you sure you want to remove ${OPTIONS.k} from the vault?`
+      message: `Are you sure you want to remove ${OPTIONS.k} from the ${VAULT_KEY} vault?`
     })
 
     if(!confirmation) {
       return console.log('Exiting...')
     }
 
-    const KEY = `${STACK_ENV.toUpperCase()}_VAULT`
-    const vault_id = await sdk.getConfig(KEY)
-    const vault = await pexec(`aws secretsmanager get-secret-value --secret-id ${vault_id}`)
-    const data = JSON.parse(vault.stdout); 
-    const secrets = JSON.parse(data.SecretString)
+    const STATE = process.env[`${STATE_KEY}`]
+    const outputs = JSON.parse(STATE || '')
 
-    console.log(`🔐 deleting ${OPTIONS.k} from the ${KEY}`)
-    delete secrets[OPTIONS.k]
- 
-    const update = await pexec(`aws secretsmanager update-secret --secret-id ${vault_id} --description "The ${STACK_ENV} secret vault" --secret-string '${JSON.stringify(secrets)}'`) 
-    console.log(update.stdout)
+    const cmd = Object.keys(outputs[VAULT_KEY])
+      .find((k) => { return k.indexOf('ConfigCommand') > -1 })
+    const cluster = Object.keys(outputs[VAULT_KEY])
+      .find((k) => { return k.indexOf('ClusterArn') > -1 })
+
+    console.log(`\n🔒 Configuring a secure connection with ${ux.colors.white(cluster || 'cluster')}:`)
+    const aws = await exec(outputs[VAULT_KEY][cmd!], process.env)
+      .catch(err => { throw err })
+
+    const config = await pexec('cat ~/.kube/config')
+    //console.log(config.stdout)
+    
+    console.log(`\n⚡️ Confirming connection to ${ux.colors.white(cluster || 'cluster')}:`)
+    await exec('kubectl get nodes')
+      .catch(err => console.log(err))
+
+    const vault = await pexec(`kubectl get secret ${VAULT_KEY} -o json`) 
+    //console.log(vault.stdout)
+
+    const encode = (str: string):string => Buffer.from(str, 'binary').toString('base64');
+    const data = JSON.parse(vault.stdout); 
+
+    console.log(`\n🔐 Deleting ${OPTIONS.k} from the ${VAULT_KEY} vault`)
+
+    // not sure why but k8s breaks annotations json with \n
+    // so delete last applied annotations before applying
+    delete data?.metadata?.annotations
+    delete data.data[OPTIONS.k]
+
+    const payload = JSON.stringify(data)
+    await pexec(`echo '${payload}' | kubectl apply -f -`) 
+    console.log(`✅ ${OPTIONS.k} removed from the ${VAULT_KEY} vault\n`)
 
   } catch (e) {
     console.log('there was an error:')
@@ -172,9 +268,7 @@ async function remove() {
 
 async function destroy() {
 
-  const STACK_TYPE = process.env.STACK_TYPE || 'aws-eks-ec2-asg';
-
-  sdk.log(`🛠 Loading up ${STACK_TYPE} stack...`)
+  sdk.log(`🛠 Loading the ${ux.colors.white(STACK_TYPE)} stack for the ${ux.colors.white(STACK_TEAM)} team...`)
 
   const { STACK_ENV } = await ux.prompt<{
     STACK_ENV: string
@@ -187,24 +281,45 @@ async function destroy() {
 
   try {
 
-    const KEY = `${STACK_ENV.toUpperCase()}_VAULT`
-    const vault_id = await sdk.getConfig(KEY)
+    const PREFIX = `${STACK_ENV}_${STACK_TYPE}`.replace(/-/g, '_').toUpperCase()
+    const VAULT_KEY = `${STACK_ENV}-${STACK_TYPE}`
+    const STATE_KEY = `${PREFIX}_STATE`
 
     const { confirmation } = await ux.prompt<{
       confirmation: boolean
     }>({
       type: 'confirm',
       name: 'confirmation',
-      message: 'Are you sure you want to delete the vault?'
+      message: `⛔️ Are you sure you want to delete the ${VAULT_KEY} vault?`
     })
 
     if(!confirmation) {
       return console.log('Exiting...')
     }
 
-    const vault = await pexec(`aws secretsmanager delete-secret --secret-id ${vault_id} --force-delete-without-recovery`)
-    const data = JSON.parse(vault.stdout)
-    console.log(data)
+    const STATE = process.env[`${STATE_KEY}`]
+    const outputs = JSON.parse(STATE || '')
+
+    const cmd = Object.keys(outputs[VAULT_KEY])
+      .find((k) => { return k.indexOf('ConfigCommand') > -1 })
+    const cluster = Object.keys(outputs[VAULT_KEY])
+      .find((k) => { return k.indexOf('ClusterArn') > -1 })
+
+    console.log(`\n🔒 Configuring a secure connection with ${ux.colors.white(cluster || 'cluster')}:`)
+    const aws = await exec(outputs[VAULT_KEY][cmd!], process.env)
+      .catch(err => { throw err })
+
+    const config = await pexec('cat ~/.kube/config')
+    //console.log(config.stdout)
+    
+    console.log(`\n⚡️ Confirming connection to ${ux.colors.white(cluster || 'cluster')}:`)
+    await exec('kubectl get nodes')
+      .catch(err => console.log(err))
+
+    console.log(`\n🔐 Destroying the vault...`)
+    await pexec(`kubectl delete secret ${VAULT_KEY}`) 
+    console.log(`✅ ${VAULT_KEY} has been destroyed\n`)
+
 
   } catch (e) {
     console.log('there was an error:')
@@ -259,3 +374,11 @@ switch(ARGS[0]) {
   break;
 }
 
+async function exec(cmd, env?: any | null) {
+  return new Promise(function(resolve, reject) {
+    const child = oexec(cmd, env)
+    child?.stdout?.pipe(process.stdout)
+    child?.stderr?.pipe(process.stderr)
+    child.on('close', (code) => { code ? reject(child.stdout) : resolve(child.stderr) })
+  })
+}

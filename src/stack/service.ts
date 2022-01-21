@@ -114,41 +114,41 @@ export default class Service extends cdk.Stack {
       secretArn: this.db?.secret?.secretArn
     });
 
-    try {
+    // try {
 
-      const KUBE_CONFIG = process.env.KUBE_CONFIG
+      // const KUBE_CONFIG = process.env.KUBE_CONFIG
 
-      if (KUBE_CONFIG) {
+      // if (KUBE_CONFIG) {
 
-        const kc = new k8s.KubeConfig();
-        kc.loadFromString(KUBE_CONFIG)
+        // const kc = new k8s.KubeConfig();
+        // kc.loadFromString(KUBE_CONFIG)
 
-        const k8sApiCoreV1Api = kc.makeApiClient(k8s.CoreV1Api);
-        const k8sApiAppsV1Api = kc.makeApiClient(k8s.AppsV1Api);
-        const { deployment, service } = createTemplates(this.repo, this.tag)
+        // const k8sApiCoreV1Api = kc.makeApiClient(k8s.CoreV1Api);
+        // const k8sApiAppsV1Api = kc.makeApiClient(k8s.AppsV1Api);
+        // const { deployment, service } = createTemplates(this.repo, this.tag)
 
-        const deploymentExists = await k8sApiAppsV1Api.readNamespacedDeployment(deployment.metadata.name, 'default').catch((err) => {
-          return false
-        })
+        // const deploymentExists = await k8sApiAppsV1Api.readNamespacedDeployment(deployment.metadata.name, 'default').catch((err) => {
+          // return false
+        // })
 
-        const serviceExists = await k8sApiCoreV1Api.readNamespacedService(service.metadata.name, 'default').catch((err) => {
-          return false
-        })
+        // const serviceExists = await k8sApiCoreV1Api.readNamespacedService(service.metadata.name, 'default').catch((err) => {
+          // return false
+        // })
 
-        if (deploymentExists) {
-          await k8sApiAppsV1Api.patchNamespacedDeployment(deployment.metadata.name, 'default', deployment, undefined, undefined, undefined, undefined, { headers: { 'content-type': 'application/strategic-merge-patch+json' }})
-        } else {
-          await k8sApiAppsV1Api.createNamespacedDeployment('default', deployment)
-        }
+        // if (deploymentExists) {
+          // await k8sApiAppsV1Api.patchNamespacedDeployment(deployment.metadata.name, 'default', deployment, undefined, undefined, undefined, undefined, { headers: { 'content-type': 'application/strategic-merge-patch+json' }})
+        // } else {
+          // await k8sApiAppsV1Api.createNamespacedDeployment('default', deployment)
+        // }
 
-        if (serviceExists) {
-          await k8sApiCoreV1Api.patchNamespacedService(service.metadata.name, 'default', service, undefined, undefined, undefined, undefined, { headers: { 'content-type': 'application/strategic-merge-patch+json' }})
-        } else {
-          await k8sApiCoreV1Api.createNamespacedService('default', service)
-        }
-      }
-    } catch (err) {
-      console.log('err :', err)
-    }
+        // if (serviceExists) {
+          // await k8sApiCoreV1Api.patchNamespacedService(service.metadata.name, 'default', service, undefined, undefined, undefined, undefined, { headers: { 'content-type': 'application/strategic-merge-patch+json' }})
+        // } else {
+          // await k8sApiCoreV1Api.createNamespacedService('default', service)
+        // }
+      // }
+    // } catch (err) {
+      // console.log('err :', err)
+    // }
   }
 }

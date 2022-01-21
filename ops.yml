@@ -68,12 +68,16 @@ commands:
     description: "manage secrets vault"
     env:
       static:
-        - STACK_TYPE=aws-ecs-fargate
+        - STACK_TYPE=aws-eks-ec2-asg
         - AWS_REGION=us-east-1
       secrets:
         - AWS_ACCESS_KEY_ID
         - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
+      configs:
+        - DEV_AWS_EKS_EC2_ASG_STATE
+        - STG_AWS_EKS_EC2_ASG_STATE
+        - PRD_AWS_EKS_EC2_ASG_STATE
     help:
       usage: ops run vault <sub-cmd> <--key> <--value>
       arguments: 
