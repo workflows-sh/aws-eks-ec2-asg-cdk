@@ -6,8 +6,9 @@ const pexec = util.promisify(oexec);
 async function run() {
 
   const STACK_TYPE = process.env.STACK_TYPE || 'aws-eks-ec2-asg';
+  const STACK_TEAM = process.env.OPS_TEAM_NAME || 'private'
 
-  sdk.log(`🛠 Loading up ${STACK_TYPE} stack...`)
+  sdk.log(`🛠  Loading the ${ux.colors.white(STACK_TYPE)} stack for the ${ux.colors.white(STACK_TEAM)}...`)
 
   const { STACK_ENV } = await ux.prompt<{
     STACK_ENV: string
@@ -37,17 +38,21 @@ async function run() {
     })
 
   const STACKS:any = {
-    'dev': [`${STACK_REPO}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
-    'stg': [`${STACK_REPO}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
-    'prd': [`${STACK_REPO}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
-    'all': [
-      `${STACK_REPO}`,
-      'dev', 'stg', 'prd',
-      `dev-${STACK_REPO}`,
-      `stg-${STACK_REPO}`,
-      `stg-${STACK_REPO}`
-    ]
-  }
+      'dev': [`${STACK_REPO}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
+      'stg': [`${STACK_REPO}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
+      'prd': [`${STACK_REPO}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
+      'all': [
+        `${STACK_REPO}-${STACK_TYPE}`,
+
+        `dev-${STACK_TYPE}`,
+        `stg-${STACK_TYPE}`,
+        `prd-${STACK_TYPE}`,
+
+        `dev-${STACK_REPO}-${STACK_TYPE}`,
+        `stg-${STACK_REPO}-${STACK_TYPE}`,
+        `prd-${STACK_REPO}-${STACK_TYPE}`
+      ]
+    }
 
   if(!STACKS[STACK_ENV].length) {
     return console.log('Please try again with environment set to <dev|stg|prd|all>')
@@ -62,7 +67,7 @@ async function run() {
   const cmd = Object.keys(BOOT_CONFIG[BOOT_STATE_KEY!])
     .find((k) => { return k.indexOf('ConfigCommand') > -1 })
 
-  console.log(`\n 🔐 Configuring access to ${ux.colors.white(STACK_ENV)} cluster`)
+  console.log(`\n🔐 Configuring access to ${ux.colors.white(STACK_ENV)} cluster`)
   await exec(BOOT_CONFIG[BOOT_STATE_KEY!][cmd!], process.env)
     .catch(err => { throw err })
 
