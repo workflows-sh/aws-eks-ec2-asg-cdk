@@ -8,18 +8,15 @@ import * as s3 from '@aws-cdk/aws-s3';
 import * as s3Deploy from '@aws-cdk/aws-s3-deployment';
 import * as cloudfront from '@aws-cdk/aws-cloudfront';
 import * as sqs from '@aws-cdk/aws-sqs';
-import * as elasticache from './redis'
-import { createTemplates } from './templates';
-import * as k8s from '@kubernetes/client-node'
-import { sdk } from '@cto.ai/sdk'
-import { kubeconfig } from '../kubconfig';
-import ecsPatterns = require('@aws-cdk/aws-ecs-patterns')
-import { Stack } from '@aws-cdk/core';
-process.env.KUBE_CONFIG = kubeconfig
 
 interface StackProps {
-  repo: string,
-  tag: string,
+  org: string
+  env: string
+  repo: string
+  tag: string
+  key: string
+  entropy: string
+
   cluster: eks.Cluster | undefined
   registry: ecr.Repository | undefined
   redis: any | undefined // todo @kc - fix this
@@ -28,10 +25,23 @@ interface StackProps {
  }
 
 export default class Service extends cdk.Stack {
-  
-  public readonly URL: string
-  public readonly props: StackProps
+
   public readonly id: string
+  public readonly org: string
+  public readonly env: string
+  public readonly repo: string
+  public readonly tag: string
+  public readonly key: string
+  public readonly entropy: string
+
+  public readonly vpc: ec2.Vpc
+  public readonly cluster: eks.Cluster
+  public readonly registry: ecr.Repository
+  public readonly db: rds.ServerlessCluster
+  public readonly mq: sqs.Queue
+  public readonly redis: any | undefined // todo @kc - fix this
+
+  public URL: string
 
   constructor(scope: cdk.Construct, id: string, props?: StackProps) {
     super(scope, id)
@@ -51,13 +61,23 @@ export default class Service extends cdk.Stack {
     if(!props?.mq) {
       throw new Error('You must provide a mq for Service')
     }
-    this.props = props
+
     this.id = id
+    this.org = props?.org ?? 'cto-ai'
+    this.env = props?.env ?? 'dev'
+    this.key = props?.key ?? 'aws-eks-ec2-asg'
+    this.repo = props?.repo ?? 'sample-app'
+    this.tag = props?.tag ?? 'main'
+    this.entropy = props?.entropy ?? '01012022'
+
+    this.cluster = props.cluster
+    this.registry = props.registry
+    this.db = props.db
+    this.redis = props.redis
+    this.mq = props.mq
   }
 
   async initialize() {
-    const repo = this.props?.repo ?? 'sample-app'
-    const tag = this.props?.tag ?? 'main'
 
     // S3
     const bucket = new s3.Bucket(this, `${this.id}-bucket`, {
@@ -85,35 +105,74 @@ export default class Service extends cdk.Stack {
     });
 
     const db_secrets = sm.Secret.fromSecretAttributes(this, 'host', {
-      secretArn: this.props?.db?.secret?.secretArn
+      secretArn: this.db?.secret?.secretArn
     });
 
-
     try {
-      if(process.env.KUBE_CONFIG) {
-        const kc = new k8s.KubeConfig();
-        kc.loadFromString(process.env.KUBE_CONFIG)
-        const k8sApiCoreV1Api = kc.makeApiClient(k8s.CoreV1Api);
-        const k8sApiAppsV1Api = kc.makeApiClient(k8s.AppsV1Api);
-        const { deployment, service } = createTemplates(repo, tag)
-        const deploymentExists = await k8sApiAppsV1Api.readNamespacedDeployment(deployment.metadata.name, 'default').catch((err) => {
-          return false
-        })
-        const serviceExists = await k8sApiCoreV1Api.readNamespacedService(service.metadata.name, 'default').catch((err) => {
-          return false
-        })
-        if (deploymentExists) {
-          await k8sApiAppsV1Api.patchNamespacedDeployment(deployment.metadata.name, 'default', deployment, undefined, undefined, undefined, undefined, { headers: { 'content-type': 'application/strategic-merge-patch+json' }})
-        } else {
-          await k8sApiAppsV1Api.createNamespacedDeployment('default', deployment)
-        }
 
-        if (serviceExists) {
-          await k8sApiCoreV1Api.patchNamespacedService(service.metadata.name, 'default', service, undefined, undefined, undefined, undefined, { headers: { 'content-type': 'application/strategic-merge-patch+json' }})
-        } else {
-          await k8sApiCoreV1Api.createNamespacedService('default', service)
+      // deployment
+      const deployment = this.cluster.addManifest(`${this.id}-deployment-manifest`, {
+        apiVersion: 'apps/v1',
+        kind: 'Deployment', 
+        metadata: {
+          name: `${this.repo}`,
+          labels: {
+            'app.kubernetes.io/name': `load-balancer-${this.repo}`
+          },
+        },
+        spec: {
+          replicas: 1,
+          selector: {
+            matchLabels: {
+              'app.kubernetes.io/name': `load-balancer-${this.repo}`
+            }
+          },
+          template: {
+            metadata: {
+              labels: {
+                'app.kubernetes.io/name': `load-balancer-${this.repo}`
+              },
+            },
+            spec: {
+              containers: [{
+                image: `${process.env.AWS_ACCOUNT_NUMBER}.dkr.ecr.${process.env.AWS_REGION}.amazonaws.com/${this.repo}-${process.env.STACK_TYPE}:${this.tag}`,
+                name: `${this.repo}`,
+                ports: [{
+                  containerPort: 3000
+                }]
+              }]
+            }
+          }
         }
-      }
+      })
+
+      // service
+      const service = this.cluster.addManifest(`${this.id}-service-manifest`, {
+        apiVersion: 'v1',
+          kind: 'Service',
+          metadata: {
+            name: `${this.repo}-service`,
+            labels: {
+              'app.kubernetes.io/name': `load-balancer-${this.repo}`
+            },
+          },
+          spec: {
+            selector: {
+              'app.kubernetes.io/name': `load-balancer-${this.repo}`
+            },
+            ports: [{
+              'protocol': 'TCP',
+              'port': 80,
+              'targetPort': 3000
+            }],
+            type: 'LoadBalancer'
+          }
+      })
+
+      service.node.addDependency(deployment)
+
+
+
     } catch (err) {
       console.log('err :', err)
     }

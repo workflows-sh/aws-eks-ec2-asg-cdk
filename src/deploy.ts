@@ -6,8 +6,9 @@ const pexec = util.promisify(oexec);
 async function run() {
 
   const STACK_TYPE = process.env.STACK_TYPE || 'aws-eks-ec2-asg';
+  const STACK_TEAM = process.env.OPS_TEAM_NAME || 'private'
 
-  sdk.log(`🛠 Loading up ${STACK_TYPE} stack...`)
+  sdk.log(`🛠  Loading the ${ux.colors.white(STACK_TYPE)} stack for the ${ux.colors.white(STACK_TEAM)}...`)
 
   const { STACK_ENV } = await ux.prompt<{
     STACK_ENV: string
@@ -37,15 +38,21 @@ async function run() {
     })
 
   const STACKS:any = {
-    'dev': [`${STACK_ENV}-${STACK_REPO}`],
-    'stg': [`${STACK_ENV}-${STACK_REPO}`],
-    'prd': [`${STACK_ENV}-${STACK_REPO}`],
-    'all': [
-      `dev-${STACK_REPO}`,
-      `stg-${STACK_REPO}`,
-      `stg-${STACK_REPO}`
-    ]
-  }
+      'dev': [`${STACK_REPO}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
+      'stg': [`${STACK_REPO}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
+      'prd': [`${STACK_REPO}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
+      'all': [
+        `${STACK_REPO}-${STACK_TYPE}`,
+
+        `dev-${STACK_TYPE}`,
+        `stg-${STACK_TYPE}`,
+        `prd-${STACK_TYPE}`,
+
+        `dev-${STACK_REPO}-${STACK_TYPE}`,
+        `stg-${STACK_REPO}-${STACK_TYPE}`,
+        `prd-${STACK_REPO}-${STACK_TYPE}`
+      ]
+    }
 
   if(!STACKS[STACK_ENV].length) {
     return console.log('Please try again with environment set to <dev|stg|prd|all>')
@@ -53,18 +60,25 @@ async function run() {
 
   sdk.log(`📦 Deploying ${STACK_TAG} to ${STACK_ENV}`)
 
-  // /*const synth =*/ await exec(`npm run cdk synth ${STACK_ENV}`, {
-  //   env: { 
-  //     ...process.env, 
-  //     STACK_TYPE: STACK_TYPE, 
-  //     STACK_ENV: STACK_ENV,
-  //     STACK_REPO: STACK_REPO,
-  //     STACK_TAG: STACK_TAG
-  //   }
-  // })
-  // // synth.stdout.pipe(process.stdout)
-  // // synth.stderr.pipe(process.stdout)
-  const deploy = await exec(`npm run cdk deploy ${STACKS[STACK_ENV].join(' ')}`, {
+  const BOOT_STATE = process?.env?.DEV_AWS_EKS_EC2_ASG_STATE || ''
+  const BOOT_CONFIG = JSON.parse(BOOT_STATE)
+  const BOOT_STATE_KEY = `${STACK_ENV}-${STACK_TYPE}`
+
+  const cmd = Object.keys(BOOT_CONFIG[BOOT_STATE_KEY!])
+    .find((k) => { return k.indexOf('ConfigCommand') > -1 })
+
+  console.log(`\n🔐 Configuring access to ${ux.colors.white(STACK_ENV)} cluster`)
+  await exec(BOOT_CONFIG[BOOT_STATE_KEY!][cmd!], process.env)
+    .catch(err => { throw err })
+
+  console.log(`\n⚡️ Confirming connection to ${ux.colors.white(STACK_ENV)} cluster:`)
+  await exec('kubectl get nodes')
+    .catch(err => { throw err })
+
+  const getKubeConfig = await pexec('cat ~/.kube/config')
+  process.env.KUBE_CONFIG = getKubeConfig.stdout;
+
+  await exec(`npm run cdk deploy ${STACKS[STACK_ENV].join(' ')}`, {
     env: { 
       ...process.env, 
       STACK_TYPE: STACK_TYPE, 
@@ -75,6 +89,7 @@ async function run() {
   }).catch((err) => {
     console.log(err)
     process.exit(1)
+
   })
 
   sdk.track([], {
@@ -94,7 +109,7 @@ async function exec(cmd, env?: any | null) {
     const child = oexec(cmd, env)
     child.stdout.pipe(process.stdout)
     child.stderr.pipe(process.stderr)
-    child.on('close', (code) => { code ? reject(child) : resolve(child) })
+    child.on('close', (code) => { code ? reject(child.stderr) : resolve(child.stdout) })
   })
 }
 

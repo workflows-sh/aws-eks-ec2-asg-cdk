@@ -7,9 +7,10 @@ const pexec = util.promisify(oexec);
 async function run() {
 
   const STACK_TYPE = process.env.STACK_TYPE || 'aws-eks-ec2-asg';
+  const STACK_TEAM = process.env.OPS_TEAM_NAME || 'private'
 
-  sdk.log(`🛠 Loading up ${STACK_TYPE} stack...`)
-
+  sdk.log(`🛠  Loading the ${ux.colors.white(STACK_TYPE)} stack for the ${ux.colors.white(STACK_TEAM)}...`)
+  
   const { STACK_ENV } = await ux.prompt<{
     STACK_ENV: string
   }>({
@@ -38,41 +39,30 @@ async function run() {
     })
 
   const STACKS:any = {
-    'dev': [`${STACK_REPO}`, STACK_ENV, `${STACK_ENV}-${STACK_REPO}`],
-    'stg': [`${STACK_REPO}`, STACK_ENV, `${STACK_ENV}-${STACK_REPO}`],
-    'prd': [`${STACK_REPO}`, STACK_ENV, `${STACK_ENV}-${STACK_REPO}`],
+    'dev': [`${STACK_REPO}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
+    'stg': [`${STACK_REPO}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
+    'prd': [`${STACK_REPO}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
     'all': [
-      `${STACK_REPO}`,
-      'dev', 'stg', 'prd',
-      `dev-${STACK_REPO}`,
-      `stg-${STACK_REPO}`,
-      `stg-${STACK_REPO}`
+      `${STACK_REPO}-${STACK_TYPE}`,
+
+      `dev-${STACK_TYPE}`,
+      `stg-${STACK_TYPE}`,
+      `prd-${STACK_TYPE}`,
+
+      `dev-${STACK_REPO}-${STACK_TYPE}`,
+      `stg-${STACK_REPO}-${STACK_TYPE}`,
+      `prd-${STACK_REPO}-${STACK_TYPE}`
     ]
   }
 
   if(!STACKS[STACK_ENV].length) {
     return console.log('Please try again with environment set to <dev|stg|prd|all>')
   }
+  
+  sdk.log(`\n📦 Setting up the ${ux.colors.white(STACK_TYPE)} ${ux.colors.white(STACK_ENV)} stack for ${ux.colors.white(STACK_TEAM)} team...`)
+  await exec(`./node_modules/.bin/cdk bootstrap`, { env: process.env })
 
-  // Pull env vars from secret vault and set on process.env
-  // Its super annoying that it auto prompts if you cannot find it
-  // const secret = await sdk.getSecret(`${STACK_ENV.toUpperCase()}_KUBE_CONFIG`) 
-  // process.env.KUBE_CONFIG = secret[`${STACK_ENV.toUpperCase()}_KUBE_CONFIG`]
-
-  sdk.log(`📦 Setting up the stack`)
-  /*const synth =*/ await exec(`npm run cdk synth`, {
-    env: { 
-      ...process.env, 
-      STACK_ENV: STACK_ENV,
-      STACK_TYPE: STACK_TYPE, 
-      STACK_REPO: STACK_REPO,
-      STACK_TAG: STACK_TAG
-    }
-  })
-  // synth.stdout.pipe(process.stdout)
-  // synth.stderr.pipe(process.stdout)
-
-  const deploy = await exec(`./node_modules/.bin/cdk deploy ${STACKS[STACK_ENV].join(' ')} --outputs-file outputs.json`, {
+  await exec(`./node_modules/.bin/cdk deploy ${STACKS[STACK_ENV].join(' ')} --outputs-file outputs.json`, {
     env: { 
       ...process.env, 
       STACK_ENV: STACK_ENV,
@@ -86,22 +76,51 @@ async function run() {
 
     try {
 
-      const outputs = await fs.readFileSync('./outputs.json', 'utf8')
-      const json = JSON.parse(outputs)
 
-      const cmd = Object.keys(json[STACK_ENV])
+      const json = await fs.readFileSync('./outputs.json', 'utf8')
+      const outputs = JSON.parse(json)
+      // console.log(outputs)
+
+      const STATE_KEY = `${STACK_ENV}-${STACK_TYPE}`
+      const cmd = Object.keys(outputs[STATE_KEY])
         .find((k) => { return k.indexOf('ConfigCommand') > -1 })
+      const cluster = Object.keys(outputs[STATE_KEY])
+        .find((k) => { return k.indexOf('ClusterArn') > -1 })
 
-      console.log('Running: ', json[STACK_ENV][cmd!])
-      const aws = await exec(json[STACK_ENV][cmd!], process.env)
+      console.log(`\n🔒 Configuring a secure connection with ${ux.colors.white(cluster || 'cluster')}:`)
+      const aws = await exec(outputs[STATE_KEY][cmd!], process.env)
         .catch(err => { throw err })
 
-      const config = await pexec('cat ~/.kube/config')
-      console.log(config.stdout)
+      console.log(`${ux.colors.white('⚠️  Run this command to setup your Kuberenetes configuration locally:')}`)
+      console.log(ux.colors.green(outputs[STATE_KEY][cmd!]))
 
-      // save the KubeConfig to secret store
-      // WIP: this still will require AWS_* in process.env later I think
-      sdk.setSecret(`${STACK_ENV.toUpperCase()}_KUBE_CONFIG`, config.stdout)
+      const config = await pexec('cat ~/.kube/config')
+      // console.log(config.stdout)
+      
+      console.log(`\n⚡️ Confirming connection to ${ux.colors.white(cluster || 'cluster')}:`)
+      await exec('kubectl get nodes')
+        .catch(err => console.log(err))
+
+      const CONFIG_KEY = `${STACK_ENV}_${STACK_TYPE}_STATE`.toUpperCase().replace(/-/g,'_')
+      if(!process.env[CONFIG_KEY]) {
+
+        // install helm charts here
+
+      }
+
+      console.log(`\n🔒 Syncing infrastructure state with ${ux.colors.white(STACK_TEAM)} team...`)
+      sdk.setConfig(CONFIG_KEY, JSON.stringify(outputs))
+      console.log(`✅ Saved the following state in your ${ux.colors.white(STACK_TEAM)} config as ${ux.colors.white(CONFIG_KEY)}:`)
+      console.log(outputs)
+
+      console.log('\n🚀 Deploying a hello world application to cluster to finalize setup...')
+      await exec('kubectl apply -f src/kubectl/hello-world/')
+        .catch(err => console.log(err))
+
+      console.log('\n✅ Deployed. Load Balancer is provisioning...')
+      console.log(`👀 Check your ${ux.colors.white('AWS')} dashboard or Lens for status.`)
+      console.log(`\n${ux.colors.italic.white('Happy Workflowing!')}\n`)
+
 
     } catch (e) {
       throw e
@@ -121,9 +140,8 @@ async function exec(cmd, env?: any | null) {
     const child = oexec(cmd, env)
     child.stdout.pipe(process.stdout)
     child.stderr.pipe(process.stderr)
-    child.on('close', (code) => { code ? reject(child) : resolve(child) })
+    child.on('close', (code) => { code ? reject(child.stderr) : resolve(child.stdout) })
   })
 }
-
 
 run()
