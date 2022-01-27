@@ -89,7 +89,7 @@ async function run() {
       STACK_TAG: STACK_TAG
     }
   }).catch((err) => {
-    await ux.print(`⚠️  The deployment failed to complete successfully and will automatically rollback.`)
+    ux.print(`⚠️  The deployment failed to complete successfully and will automatically rollback.`)
     process.exit(1)
 
   })
