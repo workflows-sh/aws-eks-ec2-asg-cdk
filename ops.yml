@@ -94,6 +94,7 @@ pipelines:
         - DEBIAN_FRONTEND=noninteractive
         - ORG=workflows-sh
         - REPO=sample-app
+        - REF=PROD-1
         - AWS_REGION=us-west-1
         - STACK_TYPE=aws-eks-ec2-asg
       secrets:

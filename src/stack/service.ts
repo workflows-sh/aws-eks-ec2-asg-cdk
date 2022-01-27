@@ -135,7 +135,7 @@ export default class Service extends cdk.Stack {
             },
             spec: {
               containers: [{
-                image: `${process.env.AWS_ACCOUNT_NUMBER}.dkr.ecr.${process.env.AWS_REGION}.amazonaws.com/${this.repo}:${this.tag}`,
+                image: `${process.env.AWS_ACCOUNT_NUMBER}.dkr.ecr.${process.env.AWS_REGION}.amazonaws.com/${this.repo}-${process.env.STACK_TYPE}:${this.tag}`,
                 name: `${this.repo}`,
                 ports: [{
                   containerPort: 3000
