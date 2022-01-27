@@ -8,12 +8,6 @@ import * as s3 from '@aws-cdk/aws-s3';
 import * as s3Deploy from '@aws-cdk/aws-s3-deployment';
 import * as cloudfront from '@aws-cdk/aws-cloudfront';
 import * as sqs from '@aws-cdk/aws-sqs';
-import * as elasticache from './redis'
-import { createTemplates } from './templates';
-import * as k8s from '@kubernetes/client-node'
-import { sdk } from '@cto.ai/sdk'
-import ecsPatterns = require('@aws-cdk/aws-ecs-patterns')
-import { Stack } from '@aws-cdk/core';
 
 interface StackProps {
   org: string
@@ -114,41 +108,73 @@ export default class Service extends cdk.Stack {
       secretArn: this.db?.secret?.secretArn
     });
 
-    // try {
+    try {
 
-      // const KUBE_CONFIG = process.env.KUBE_CONFIG
+      // deployment
+      const deployment = this.cluster.addManifest(`${this.id}-deployment-manifest`, {
+        apiVersion: 'apps/v1',
+        kind: 'Deployment', 
+        metadata: {
+          name: `${this.repo}`,
+          labels: {
+            'app.kubernetes.io/name': `load-balancer-${this.repo}`
+          },
+        },
+        spec: {
+          replicas: 1,
+          selector: {
+            matchLabels: {
+              'app.kubernetes.io/name': `load-balancer-${this.repo}`
+            }
+          },
+          template: {
+            metadata: {
+              labels: {
+                'app.kubernetes.io/name': `load-balancer-${this.repo}`
+              },
+            },
+            spec: {
+              containers: [{
+                image: `${process.env.AWS_ACCOUNT_NUMBER}.dkr.ecr.${process.env.AWS_REGION}.amazonaws.com/${this.repo}:${this.tag}`,
+                name: `${this.repo}`,
+                ports: [{
+                  containerPort: 3000
+                }]
+              }]
+            }
+          }
+        }
+      })
 
-      // if (KUBE_CONFIG) {
+      // service
+      const service = this.cluster.addManifest(`${this.id}-service-manifest`, {
+        apiVersion: 'v1',
+          kind: 'Service',
+          metadata: {
+            name: `${this.repo}-service`,
+            labels: {
+              'app.kubernetes.io/name': `load-balancer-${this.repo}`
+            },
+          },
+          spec: {
+            selector: {
+              'app.kubernetes.io/name': `load-balancer-${this.repo}`
+            },
+            ports: [{
+              'protocol': 'TCP',
+              'port': 80,
+              'targetPort': 3000
+            }],
+            type: 'LoadBalancer'
+          }
+      })
 
-        // const kc = new k8s.KubeConfig();
-        // kc.loadFromString(KUBE_CONFIG)
+      service.node.addDependency(deployment)
 
-        // const k8sApiCoreV1Api = kc.makeApiClient(k8s.CoreV1Api);
-        // const k8sApiAppsV1Api = kc.makeApiClient(k8s.AppsV1Api);
-        // const { deployment, service } = createTemplates(this.repo, this.tag)
 
-        // const deploymentExists = await k8sApiAppsV1Api.readNamespacedDeployment(deployment.metadata.name, 'default').catch((err) => {
-          // return false
-        // })
 
-        // const serviceExists = await k8sApiCoreV1Api.readNamespacedService(service.metadata.name, 'default').catch((err) => {
-          // return false
-        // })
-
-        // if (deploymentExists) {
-          // await k8sApiAppsV1Api.patchNamespacedDeployment(deployment.metadata.name, 'default', deployment, undefined, undefined, undefined, undefined, { headers: { 'content-type': 'application/strategic-merge-patch+json' }})
-        // } else {
-          // await k8sApiAppsV1Api.createNamespacedDeployment('default', deployment)
-        // }
-
-        // if (serviceExists) {
-          // await k8sApiCoreV1Api.patchNamespacedService(service.metadata.name, 'default', service, undefined, undefined, undefined, undefined, { headers: { 'content-type': 'application/strategic-merge-patch+json' }})
-        // } else {
-          // await k8sApiCoreV1Api.createNamespacedService('default', service)
-        // }
-      // }
-    // } catch (err) {
-      // console.log('err :', err)
-    // }
+    } catch (err) {
+      console.log('err :', err)
+    }
   }
 }
