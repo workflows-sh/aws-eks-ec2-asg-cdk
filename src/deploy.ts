@@ -38,27 +38,29 @@ async function run() {
     })
 
   const STACKS:any = {
-      'dev': [`${STACK_REPO}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
-      'stg': [`${STACK_REPO}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
-      'prd': [`${STACK_REPO}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
-      'all': [
-        `${STACK_REPO}-${STACK_TYPE}`,
+    'dev': [`${STACK_REPO}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
+    'stg': [`${STACK_REPO}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
+    'prd': [`${STACK_REPO}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
+    'all': [
+      `${STACK_REPO}-${STACK_TYPE}`,
 
-        `dev-${STACK_TYPE}`,
-        `stg-${STACK_TYPE}`,
-        `prd-${STACK_TYPE}`,
+      `dev-${STACK_TYPE}`,
+      `stg-${STACK_TYPE}`,
+      `prd-${STACK_TYPE}`,
 
-        `dev-${STACK_REPO}-${STACK_TYPE}`,
-        `stg-${STACK_REPO}-${STACK_TYPE}`,
-        `prd-${STACK_REPO}-${STACK_TYPE}`
-      ]
-    }
+      `dev-${STACK_REPO}-${STACK_TYPE}`,
+      `stg-${STACK_REPO}-${STACK_TYPE}`,
+      `prd-${STACK_REPO}-${STACK_TYPE}`
+    ]
+  }
 
   if(!STACKS[STACK_ENV].length) {
     return console.log('Please try again with environment set to <dev|stg|prd|all>')
   }
 
-  sdk.log(`📦 Deploying ${STACK_TAG} to ${STACK_ENV}`)
+  console.log('')
+  await ux.print(`📦 Deploying ${ux.colors.white(STACK_REPO)}:${ux.colors.white(STACK_TAG)} to ${ux.colors.white(STACK_ENV)} cluster`)
+  console.log('')
 
   const BOOT_STATE = process?.env?.DEV_AWS_EKS_EC2_ASG_STATE || ''
   const BOOT_CONFIG = JSON.parse(BOOT_STATE)
@@ -87,7 +89,7 @@ async function run() {
       STACK_TAG: STACK_TAG
     }
   }).catch((err) => {
-    console.log(err)
+    await ux.print(`⚠️  The deployment failed to complete successfully and will automatically rollback.`)
     process.exit(1)
 
   })
