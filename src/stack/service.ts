@@ -9,6 +9,12 @@ import * as s3Deploy from '@aws-cdk/aws-s3-deployment';
 import * as cloudfront from '@aws-cdk/aws-cloudfront';
 import * as sqs from '@aws-cdk/aws-sqs';
 
+import util from 'util';
+import { exec as oexec } from 'child_process';
+import { ux } from '@cto.ai/sdk'
+const pexec = util.promisify(oexec);
+const convert = require('string-type-convertor');
+
 interface StackProps {
   org: string
   env: string
@@ -104,14 +110,44 @@ export default class Service extends cdk.Stack {
       ]
     });
 
-    const db_secrets = sm.Secret.fromSecretAttributes(this, 'host', {
+    const CLUSTER_VAULT = sm.Secret.fromSecretAttributes(this, 'host', {
       secretArn: this.db?.secret?.secretArn
     });
 
+    let secrets = {}
+    const decode = (str: string):string => Buffer.from(str, 'base64').toString('binary');
+
+    try {
+      const VAULT_KEY = `${this.env}-${this.key}`
+      const vault = await pexec(`kubectl get secret ${VAULT_KEY} -o json`) 
+      const data = JSON.parse(vault.stdout); 
+      for(let index of Object.keys(data.data)){
+          let e = decode(data.data[index])
+          secrets[index] = e
+      }
+    } catch(e) {
+      console.log('There was an error fetching secrets from the cluster vault:', e)
+    }
+
+    const environment = Object.assign({
+      PORT: "3000",
+      DB_HOST: CLUSTER_VAULT.secretValueFromJson('host').toString(),
+      DB_PORT: CLUSTER_VAULT.secretValueFromJson('port').toString(),
+      DB_USER: CLUSTER_VAULT.secretValueFromJson('username').toString(),
+      REDIS_HOST: this.redis?.cluster?.attrRedisEndpointAddress,
+      REDIS_PORT: this.redis?.cluster?.attrRedisEndpointPort,
+      SQS_URL: this.mq?.queueUrl,
+      SQS_NAME: this.mq?.queueName,
+      CDN_URL: cf.distributionDomainName
+    }, { ...secrets })
+
+    const env = Object.keys(environment).map((e) => {
+      return { name: e, value: environment[e] }
+    })
+
     try {
 
-      // deployment
-      const deployment = this.cluster.addManifest(`${this.id}-deployment-manifest`, {
+      const dManifest = {
         apiVersion: 'apps/v1',
         kind: 'Deployment', 
         metadata: {
@@ -135,19 +171,19 @@ export default class Service extends cdk.Stack {
             },
             spec: {
               containers: [{
-                image: `${process.env.AWS_ACCOUNT_NUMBER}.dkr.ecr.${process.env.AWS_REGION}.amazonaws.com/${this.repo}-${process.env.STACK_TYPE}:${this.tag}`,
+                image: `${process.env.AWS_ACCOUNT_NUMBER}.dkr.ecr.${process.env.AWS_REGION}.amazonaws.com/${this.repo}-${this.key}:${this.tag}`,
                 name: `${this.repo}`,
+                env: env,
                 ports: [{
-                  containerPort: 3000
+                  containerPort: convert(environment.PORT) || 3000
                 }]
               }]
             }
           }
         }
-      })
+      }
 
-      // service
-      const service = this.cluster.addManifest(`${this.id}-service-manifest`, {
+      const sManifest = {
         apiVersion: 'v1',
           kind: 'Service',
           metadata: {
@@ -163,18 +199,21 @@ export default class Service extends cdk.Stack {
             ports: [{
               'protocol': 'TCP',
               'port': 80,
-              'targetPort': 3000
+              'targetPort': convert(environment.PORT) || 3000
             }],
             type: 'LoadBalancer'
           }
-      })
+      }
 
+      // deployment
+      const deployment = this.cluster.addManifest(`${this.id}-deployment-manifest`, dManifest)
+      const service = this.cluster.addManifest(`${this.id}-service-manifest`, sManifest)
       service.node.addDependency(deployment)
 
-
-
     } catch (err) {
-      console.log('err :', err)
+
+      await ux.print(`⚠️  The deployment failed to complete successfully and will automatically rollback.`)
+
     }
   }
 }
