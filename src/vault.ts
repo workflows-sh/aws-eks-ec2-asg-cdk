@@ -31,10 +31,17 @@ async function init() {
     const PREFIX = `${STACK_ENV}_${STACK_TYPE}`.replace(/-/g, '_').toUpperCase()
     const VAULT_KEY = `${STACK_ENV}-${STACK_TYPE}`
     const STATE_KEY = `${PREFIX}_STATE`
-
     const STATE = process.env[`${STATE_KEY}`]
-    const outputs = JSON.parse(STATE || '')
 
+    if(!STATE) {
+      console.log('')
+      await ux.print(`⚠️  Cannot find your ${ux.colors.white(STACK_ENV)} cluster state in ${ux.colors.white(STACK_TEAM)} team config store.`)
+      await ux.print(`You may need to run the setup workflow to populate the state into your team config.`)
+      console.log('')
+      process.exit()
+    }
+
+    const outputs = JSON.parse(STATE || '')
     const cmd = Object.keys(outputs[VAULT_KEY])
       .find((k) => { return k.indexOf('ConfigCommand') > -1 })
     const cluster = Object.keys(outputs[VAULT_KEY])
@@ -78,6 +85,15 @@ async function create() {
     const PREFIX = `${STACK_ENV}_${STACK_TYPE}`.replace(/-/g, '_').toUpperCase()
     const VAULT_KEY = `${STACK_ENV}-${STACK_TYPE}`
     const STATE_KEY = `${PREFIX}_STATE`
+    const STATE = process.env[`${STATE_KEY}`]
+
+    if(!STATE) {
+      console.log('')
+      await ux.print(`⚠️  Cannot find your ${ux.colors.white(STACK_ENV)} cluster state in ${ux.colors.white(STACK_TEAM)} team config store.`)
+      await ux.print(`You may need to run the setup workflow to populate the state into your team config.`)
+      console.log('')
+      process.exit()
+    }
 
     const { confirmation } = await ux.prompt<{
       confirmation: boolean
@@ -91,9 +107,7 @@ async function create() {
       return console.log('Exiting...')
     }
 
-    const STATE = process.env[`${STATE_KEY}`]
     const outputs = JSON.parse(STATE || '')
-
     const cmd = Object.keys(outputs[VAULT_KEY])
       .find((k) => { return k.indexOf('ConfigCommand') > -1 })
     const cluster = Object.keys(outputs[VAULT_KEY])
@@ -150,10 +164,17 @@ async function list() {
     const PREFIX = `${STACK_ENV}_${STACK_TYPE}`.replace(/-/g, '_').toUpperCase()
     const VAULT_KEY = `${STACK_ENV}-${STACK_TYPE}`
     const STATE_KEY = `${PREFIX}_STATE`
-
     const STATE = process.env[`${STATE_KEY}`]
-    const outputs = JSON.parse(STATE || '')
 
+    if(!STATE) {
+      console.log('')
+      await ux.print(`⚠️  Cannot find your ${ux.colors.white(STACK_ENV)} cluster state in ${ux.colors.white(STACK_TEAM)} team config store.`)
+      await ux.print(`You may need to run the setup workflow to populate the state into your team config.`)
+      console.log('')
+      process.exit()
+    }
+
+    const outputs = JSON.parse(STATE || '')
     const cmd = Object.keys(outputs[VAULT_KEY])
       .find((k) => { return k.indexOf('ConfigCommand') > -1 })
     const cluster = Object.keys(outputs[VAULT_KEY])
@@ -210,6 +231,15 @@ async function remove() {
     const PREFIX = `${STACK_ENV}_${STACK_TYPE}`.replace(/-/g, '_').toUpperCase()
     const VAULT_KEY = `${STACK_ENV}-${STACK_TYPE}`
     const STATE_KEY = `${PREFIX}_STATE`
+    const STATE = process.env[`${STATE_KEY}`]
+
+    if(!STATE) {
+      console.log('')
+      await ux.print(`⚠️  Cannot find your ${ux.colors.white(STACK_ENV)} cluster state in ${ux.colors.white(STACK_TEAM)} team config store.`)
+      await ux.print(`You may need to run the setup workflow to populate the state into your team config.`)
+      console.log('')
+      process.exit()
+    }
 
     const { confirmation } = await ux.prompt<{
       confirmation: boolean
@@ -223,9 +253,7 @@ async function remove() {
       return console.log('Exiting...')
     }
 
-    const STATE = process.env[`${STATE_KEY}`]
     const outputs = JSON.parse(STATE || '')
-
     const cmd = Object.keys(outputs[VAULT_KEY])
       .find((k) => { return k.indexOf('ConfigCommand') > -1 })
     const cluster = Object.keys(outputs[VAULT_KEY])
@@ -284,6 +312,15 @@ async function destroy() {
     const PREFIX = `${STACK_ENV}_${STACK_TYPE}`.replace(/-/g, '_').toUpperCase()
     const VAULT_KEY = `${STACK_ENV}-${STACK_TYPE}`
     const STATE_KEY = `${PREFIX}_STATE`
+    const STATE = process.env[`${STATE_KEY}`]
+
+    if(!STATE) {
+      console.log('')
+      await ux.print(`⚠️  Cannot find your ${ux.colors.white(STACK_ENV)} cluster state in ${ux.colors.white(STACK_TEAM)} team config store.`)
+      await ux.print(`You may need to run the setup workflow to populate the state into your team config.`)
+      console.log('')
+      process.exit()
+    }
 
     const { confirmation } = await ux.prompt<{
       confirmation: boolean
@@ -297,9 +334,7 @@ async function destroy() {
       return console.log('Exiting...')
     }
 
-    const STATE = process.env[`${STATE_KEY}`]
     const outputs = JSON.parse(STATE || '')
-
     const cmd = Object.keys(outputs[VAULT_KEY])
       .find((k) => { return k.indexOf('ConfigCommand') > -1 })
     const cluster = Object.keys(outputs[VAULT_KEY])
