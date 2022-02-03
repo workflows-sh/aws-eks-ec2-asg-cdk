@@ -126,7 +126,7 @@ export default class Service extends cdk.Stack {
           secrets[index] = e
       }
     } catch(e) {
-      console.log('There was an error fetching secrets from the cluster vault:', e)
+      //console.log('There was an error fetching secrets from the cluster vault:', e)
     }
 
     const environment = Object.assign({
@@ -136,8 +136,8 @@ export default class Service extends cdk.Stack {
       DB_USER: CLUSTER_VAULT.secretValueFromJson('username').toString(),
       REDIS_HOST: this.redis?.cluster?.attrRedisEndpointAddress,
       REDIS_PORT: this.redis?.cluster?.attrRedisEndpointPort,
-      SQS_URL: this.mq?.queueUrl,
-      SQS_NAME: this.mq?.queueName,
+      MQ_URL: this.mq?.queueUrl,
+      MQ_NAME: this.mq?.queueName,
       CDN_URL: cf.distributionDomainName
     }, { ...secrets })
 

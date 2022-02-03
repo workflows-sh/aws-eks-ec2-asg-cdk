@@ -62,9 +62,10 @@ async function run() {
   await ux.print(`📦 Deploying ${ux.colors.white(STACK_REPO)}:${ux.colors.white(STACK_TAG)} to ${ux.colors.white(STACK_ENV)} cluster`)
   console.log('')
 
-  const BOOT_STATE = process?.env?.DEV_AWS_EKS_EC2_ASG_STATE || ''
-  const BOOT_CONFIG = JSON.parse(BOOT_STATE)
+  const STATE_PREFIX = `${STACK_ENV}_${STACK_TYPE}`.replace(/-/g, '_').toUpperCase()
   const BOOT_STATE_KEY = `${STACK_ENV}-${STACK_TYPE}`
+  const BOOT_STATE = process?.env[`${STATE_PREFIX}_STATE`] || ''
+  const BOOT_CONFIG = JSON.parse(BOOT_STATE)
 
   const cmd = Object.keys(BOOT_CONFIG[BOOT_STATE_KEY!])
     .find((k) => { return k.indexOf('ConfigCommand') > -1 })
