@@ -9,10 +9,7 @@ const OPTIONS = require('simple-argv')
 const STACK_TYPE = process.env.STACK_TYPE || 'aws-eks-ec2-asg';
 const STACK_TEAM = process.env.OPS_TEAM_NAME || 'private'
 
-
-
 async function init() {
-
 
   sdk.log(`🛠 Loading the ${ux.colors.white(STACK_TYPE)} stack for the ${ux.colors.white(STACK_TEAM)} team...`)
 

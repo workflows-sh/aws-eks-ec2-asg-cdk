@@ -62,6 +62,32 @@ async function run() {
   sdk.log(`\n📦 Setting up the ${ux.colors.white(STACK_TYPE)} ${ux.colors.white(STACK_ENV)} stack for ${ux.colors.white(STACK_TEAM)} team...`)
   await exec(`./node_modules/.bin/cdk bootstrap`, { env: process.env })
 
+  try {
+
+    console.log(`\n🛰  Attempting to bootstrap ${ux.colors.white(STACK_ENV)} state...`)
+    const STATE_PREFIX = `${STACK_ENV}_${STACK_TYPE}`.replace(/-/g, '_').toUpperCase()
+    const BOOT_STATE_KEY = `${STACK_ENV}-${STACK_TYPE}`
+    const BOOT_STATE = process?.env[`${STATE_PREFIX}_STATE`] || ''
+    const BOOT_CONFIG = JSON.parse(BOOT_STATE)
+
+    const cmd = Object.keys(BOOT_CONFIG[BOOT_STATE_KEY!])
+      .find((k) => { return k.indexOf('ConfigCommand') > -1 })
+
+    console.log(`\n🔐 Configuring access to ${ux.colors.white(STACK_ENV)} cluster`)
+    await exec(BOOT_CONFIG[BOOT_STATE_KEY!][cmd!], process.env)
+      .catch(err => { throw err })
+
+    console.log(`\n⚡️ Confirming connection to ${ux.colors.white(STACK_ENV)} cluster:`)
+    await exec('kubectl get nodes')
+      .catch(err => { throw err })
+
+    const getKubeConfig = await pexec('cat ~/.kube/config')
+    process.env.KUBE_CONFIG = getKubeConfig.stdout;
+
+  } catch (e) {
+    console.log(`⚠️  Could not boostrap ${ux.colors.white(STACK_ENV)} state. Proceeding with setup...`)
+  }
+
   await exec(`./node_modules/.bin/cdk deploy ${STACKS[STACK_ENV].join(' ')} --outputs-file outputs.json`, {
     env: { 
       ...process.env, 
@@ -75,7 +101,6 @@ async function run() {
   .then(async () => {
 
     try {
-
 
       const json = await fs.readFileSync('./outputs.json', 'utf8')
       const outputs = JSON.parse(json)
