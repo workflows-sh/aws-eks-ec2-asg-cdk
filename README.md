@@ -1,10 +1,11 @@
+
+![aws-eks-ec2](https://user-images.githubusercontent.com/24816990/174409888-488bb9b1-a200-4afd-aeb3-320680f49274.svg)
+
 # Overview
 
 This repo includes a complete repo with the PaaS workflow with GitOps / ChatOps features that supports EKS on EC2, Aurora, SQS, Redis, Autoscaling via CDK. 
 
-
-
-
+---
 ## Table of contents
 
 - [Overview](#overview)
