@@ -1,6 +1,7 @@
 
 ![aws-eks-ec2](https://user-images.githubusercontent.com/24816990/174409888-488bb9b1-a200-4afd-aeb3-320680f49274.svg)
 
+
 # Overview
 
 This repo includes a complete repo with the PaaS workflow with GitOps / ChatOps features that supports EKS on EC2, Aurora, SQS, Redis, Autoscaling via CDK. 
@@ -120,7 +121,7 @@ Learn more about CTO.ai community support channels [here](https://cto.ai/communi
 
 Feel free to submit PRs or to fill issues. Every kind of help is appreciated.
 
-Kindly check our [Contributing guide](https://github.com/workflows-sh/aws-eks-ec2-asg/blob/documentation/Contributing.md) on how to propose bugfixes and improvements, and submitting pull requests to the project.
+Kindly check our [Contributing guide](https://github.com/workflows-sh/aws-eks-ec2-asg/blob/main/Contributing.md) on how to propose bugfixes and improvements, and submitting pull requests to the project.
 
 
 - View issues related to this image in our [GitHub repository issues tracker](https://github.com/workflows-sh/aws-eks-ec2-asg/issues)
