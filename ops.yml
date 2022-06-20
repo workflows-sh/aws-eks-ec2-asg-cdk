@@ -87,7 +87,7 @@ commands:
         remove: ' remove a specific key in the environment vault'
         destroy: 'destroy the environment vault'
 pipelines:
-  - name: sample-app-pipeline:0.1.0
+  - name: sample-app-pipeline:0.3.1
     description: build a release for deployment
     env:
       static:
