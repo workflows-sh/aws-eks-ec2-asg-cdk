@@ -109,8 +109,8 @@ pipelines:
           - git
           - unzip
           - python
-        bind:
-         - /Users/campbell/Development/hackCapital/ops/sample-expressjs:/ops/application
+        # bind: useful for running workflows locally with source code
+        #  - /path/on/host/to/source:/ops/application
         steps:
           - curl https://s3.amazonaws.com/aws-cli/awscli-bundle-1.18.200.zip -o awscli-bundle.zip
           - unzip awscli-bundle.zip && ./awscli-bundle/install -b ~/bin/aws
