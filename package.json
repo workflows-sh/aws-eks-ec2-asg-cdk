@@ -39,6 +39,7 @@
     "express": "^4.17.1",
     "simple-argv": "^2.0.4",
     "source-map-support": "^0.5.19",
-    "string-type-convertor": "^1.2.0"
+    "string-type-convertor": "^1.2.0",
+    "minipass": "^3.3.5"
   }
 }

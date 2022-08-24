@@ -1,6 +1,6 @@
 version: "1"
 commands:
-  - name: setup:0.1.0
+  - name: setup-aws-eks-ec2-asg:0.1.0
     run: ./node_modules/.bin/ts-node /ops/src/setup.ts
     description: "setup an environment"
     env:
@@ -15,7 +15,7 @@ commands:
         - DEV_AWS_EKS_EC2_ASG_STATE
         - STG_AWS_EKS_EC2_ASG_STATE
         - PRD_AWS_EKS_EC2_ASG_STATE
-  - name: deploy:0.1.0
+  - name: deploy-aws-eks-ec2-asg:0.1.0
     run: ./node_modules/.bin/ts-node /ops/src/deploy.ts
     description: "deploy to an environment"
     env:
@@ -30,7 +30,7 @@ commands:
         - DEV_AWS_EKS_EC2_ASG_STATE
         - STG_AWS_EKS_EC2_ASG_STATE
         - PRD_AWS_EKS_EC2_ASG_STATE
-  - name: destroy:0.1.0
+  - name: destroy-aws-eks-ec2-asg:0.1.0
     run: ./node_modules/.bin/ts-node /ops/src/destroy.ts
     description: "destroy an environment"
     env:
@@ -41,7 +41,7 @@ commands:
         - AWS_ACCESS_KEY_ID
         - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
-  - name: ssh:0.1.0
+  - name: ssh-aws-eks-ec2-asg:0.1.0
     run: ./node_modules/.bin/ts-node /ops/src/ssh.ts
     description: "connect to bastion with ssh"
     env:
@@ -52,7 +52,7 @@ commands:
         - AWS_ACCESS_KEY_ID
         - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
-  - name: tunnel:0.1.0
+  - name: tunnel-aws-eks-ec2-asg:0.1.0
     run: ./node_modules/.bin/ts-node /ops/src/tunnel.ts
     description: "connect to bastion with ssh"
     env:
@@ -63,7 +63,7 @@ commands:
         - AWS_ACCESS_KEY_ID
         - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
-  - name: vault:0.1.0
+  - name: vault-aws-eks-ec2-asg:0.1.0
     run: ./node_modules/.bin/ts-node /ops/src/vault.ts
     description: "manage secrets vault"
     env:
@@ -86,40 +86,3 @@ commands:
         list: 'list keys in the environment vault'
         remove: ' remove a specific key in the environment vault'
         destroy: 'destroy the environment vault'
-pipelines:
-  - name: sample-app-pipeline:0.3.1
-    description: build a release for deployment
-    env:
-      static:
-        - DEBIAN_FRONTEND=noninteractive
-        - ORG=workflows-sh
-        - REPO=sample-app
-        - REF=PROD-1
-        - AWS_REGION=us-west-1
-        - STACK_TYPE=aws-eks-ec2-asg
-      secrets:
-        - GITHUB_TOKEN
-        - AWS_ACCESS_KEY_ID
-        - AWS_SECRET_ACCESS_KEY
-        - AWS_ACCOUNT_NUMBER
-    jobs:
-      - name: sample-app-build-job
-        description: sample-expressjs build step
-        packages:
-          - git
-          - unzip
-          - python
-        # bind: useful for running workflows locally with source code
-        #  - /path/on/host/to/source:/ops/application
-        steps:
-          - curl https://s3.amazonaws.com/aws-cli/awscli-bundle-1.18.200.zip -o awscli-bundle.zip
-          - unzip awscli-bundle.zip && ./awscli-bundle/install -b ~/bin/aws
-          - export PATH=~/bin:$PATH
-          - aws --version
-          # - git clone https://$GITHUB_TOKEN:x-oauth-basic@github.com/$ORG/$REPO
-          # - cd $REPO && ls -asl
-          # - git fetch && git checkout $REF
-          - cd application && ls -asl
-          - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO
-          - docker build -f Dockerfile -t $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO-$STACK_TYPE:$REF .
-          - docker push $AWS_ACCOUNT_NUMBER.dkr.ecr.$AWS_REGION.amazonaws.com/$REPO-$STACK_TYPE:$REF
