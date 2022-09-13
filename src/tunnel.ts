@@ -17,7 +17,7 @@ async function run() {
     })
 
   const bastion = execSync(
-    `aws ec2 describe-instances --region=us-east-1 --filter "Name=tag:Name,Values=${STACK_ENV}-bastion" --query "Reservations[].Instances[?State.Name == 'running'].InstanceId[]" --output text`, 
+    `aws ec2 describe-instances --region=${process.env.AWS_REGION} --filter "Name=tag:Name,Values=${STACK_ENV}-bastion" --query "Reservations[].Instances[?State.Name == 'running'].InstanceId[]" --output text`, 
     {
       env: process.env
     }
@@ -25,14 +25,14 @@ async function run() {
 
   sdk.log(`🎣 Fetching bastion for ${STACK_ENV}:${bastion}`)
   const socat = execSync(
-    `aws ssm send-command --region=us-east-1 --document-name "AWS-RunShellScript" --parameters 'commands=["socat TCP-LISTEN:3306,reuseaddr,fork TCP4:dev-devdbf57f5a1f-lcw1j73nuszw.cluster-cu1dsju6k2ca.us-east-1.rds.amazonaws.com:3306"]' --comment "starting vpc private tunnel" --targets "Key=instanceids,Values=${bastion}"`, 
+    `aws ssm send-command --region=${process.env.AWS_REGION} --document-name "AWS-RunShellScript" --parameters 'commands=["socat TCP-LISTEN:3306,reuseaddr,fork TCP4:dev-devdbf57f5a1f-lcw1j73nuszw.cluster-cu1dsju6k2ca.us-east-1.rds.amazonaws.com:3306"]' --comment "starting vpc private tunnel" --targets "Key=instanceids,Values=${bastion}"`, 
     {
       env: process.env
     }
   )
 
   console.log(`🚇 Opening session for ${STACK_ENV}:${bastion} ...`)
-  const tunnel = exec(`aws ssm start-session --region=us-east-1 --target "${bastion}" --document-name "AWS-StartPortForwardingSession" --parameters '{"portNumber":["3306"], "localPortNumber":["3306"]}'`, {
+  const tunnel = exec(`aws ssm start-session --region=${process.env.AWS_REGION} --target "${bastion}" --document-name "AWS-StartPortForwardingSession" --parameters '{"portNumber":["3306"], "localPortNumber":["3306"]}'`, {
     env: process.env
   })
 
