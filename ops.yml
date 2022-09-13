@@ -1,6 +1,6 @@
 version: "1"
 commands:
-  - name: setup-aws-eks-ec2-asg-cdk:0.1.0
+  - name: setup-aws-eks-ec2-asg-cdk:0.1.2
     run: ./node_modules/.bin/ts-node /ops/src/setup.ts
     description: "setup an environment"
     env:
@@ -12,10 +12,10 @@ commands:
         - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
       configs:
-        - DEV_AWS_EKS_EC2_ASG_STATE
-        - STG_AWS_EKS_EC2_ASG_STATE
-        - PRD_AWS_EKS_EC2_ASG_STATE
-  - name: deploy-aws-eks-ec2-asg-cdk:0.1.0
+        - DEV_AWS_EKS_EC2_ASG_CDK_STATE
+        - STG_AWS_EKS_EC2_ASG_CDK_STATE
+        - PRD_AWS_EKS_EC2_ASG_CDK_STATE
+  - name: deploy-aws-eks-ec2-asg-cdk:0.1.1
     run: ./node_modules/.bin/ts-node /ops/src/deploy.ts
     description: "deploy to an environment"
     env:
@@ -27,10 +27,10 @@ commands:
         - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
       configs:
-        - DEV_AWS_EKS_EC2_ASG_STATE
-        - STG_AWS_EKS_EC2_ASG_STATE
-        - PRD_AWS_EKS_EC2_ASG_STATE
-  - name: destroy-aws-eks-ec2-asg-cdk:0.1.0
+        - DEV_AWS_EKS_EC2_ASG_CDK_STATE
+        - STG_AWS_EKS_EC2_ASG_CDK_STATE
+        - PRD_AWS_EKS_EC2_ASG_CDK_STATE
+  - name: destroy-aws-eks-ec2-asg-cdk:0.1.1
     run: ./node_modules/.bin/ts-node /ops/src/destroy.ts
     description: "destroy an environment"
     env:
@@ -75,9 +75,9 @@ commands:
         - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
       configs:
-        - DEV_AWS_EKS_EC2_ASG_STATE
-        - STG_AWS_EKS_EC2_ASG_STATE
-        - PRD_AWS_EKS_EC2_ASG_STATE
+        - DEV_AWS_EKS_EC2_ASG_CDK_STATE
+        - STG_AWS_EKS_EC2_ASG_CDK_STATE
+        - PRD_AWS_EKS_EC2_ASG_CDK_STATE
     help:
       usage: ops run vault <sub-cmd> <--key> <--value>
       arguments: 
