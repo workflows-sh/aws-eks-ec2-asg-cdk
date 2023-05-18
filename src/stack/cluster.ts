@@ -40,7 +40,7 @@ export default class Cluster extends cdk.Stack {
     this.org = props?.org ?? 'cto-ai'
     this.env = props?.env ?? 'dev'
     this.key = props?.key ?? 'aws-eks-ec2-asg'
-    this.repo = props?.repo ?? 'sample-app'
+    this.repo = props?.repo ?? 'sample-expressjs-aws-eks-ec2-asg-cdk'
     this.tag = props?.tag ?? 'main'
     this.entropy = props?.entropy ?? '01012022'
 
@@ -102,7 +102,7 @@ export default class Cluster extends cdk.Stack {
       role: workerRole,
       minCapacity: 1,
       maxCapacity: 10,
-      desiredCapacity: 3,
+      desiredCapacity: 1,
       blockDevices: [rootVolume],
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.M5, ec2.InstanceSize.XLARGE),
       machineImage: new eks.EksOptimizedImage({
