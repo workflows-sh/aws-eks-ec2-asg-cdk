@@ -1,4 +1,4 @@
-import * as cdk from 'aws-cdk-lib/core';
+import * as cdk from 'aws-cdk-lib';
 import * as elasticache from 'aws-cdk-lib/aws-elasticache';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import { Construct } from 'constructs';
@@ -23,12 +23,20 @@ class RedisCluster extends Construct {
     });
 
     // The security group that defines network level access to the cluster
-    const securityGroup = new ec2.SecurityGroup(this, `${id}-security-group`, { vpc: targetVpc });
+    const securityGroup = new ec2.SecurityGroup(this, `${id}-security-group`, {
+      vpc: targetVpc
+    });
+
+    securityGroup.addIngressRule(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.allTraffic(),
+      'Allow all connections to redis from inside the VPC'
+    );
 
     // The cluster resource itself.
-    this.cluster = new elasticache.CfnCacheCluster(this, `${id}-cluster`, {
-      cacheNodeType: 'cache.t2.micro',
-      engine: 'redis',
+    this.cluster = new elasticache.CfnCacheCluster(this, `${id}-cluster`,
+      cacheNodeType: 'cache.t2.micro'
+      engine: 'redis'
       numCacheNodes: 1,
       autoMinorVersionUpgrade: true,
       cacheSubnetGroupName: subnetGroup.ref,

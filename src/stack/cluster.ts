@@ -57,7 +57,7 @@ export default class Cluster extends cdk.Stack {
         },
         {
           name: 'Private',
-          subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+          subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
           cidrMask: 24,
         }
       ],
@@ -127,7 +127,7 @@ export default class Cluster extends cdk.Stack {
       defaultDatabaseName: `${this.env}`,
       engine: rds.DatabaseClusterEngine.AURORA_MYSQL,
       scaling: { autoPause: cdk.Duration.seconds(0) },
-      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
+      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       securityGroups: [dbSecurityGroup],
       credentials: rds.Credentials.fromGeneratedSecret('root')
     });
