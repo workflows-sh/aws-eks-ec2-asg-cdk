@@ -1,13 +1,14 @@
-import * as cdk from '@aws-cdk/core'
-import * as ec2 from '@aws-cdk/aws-ec2'
-import * as ecr from '@aws-cdk/aws-ecr'
-import * as eks from '@aws-cdk/aws-eks'
-import * as rds from '@aws-cdk/aws-rds';
-import * as sm from "@aws-cdk/aws-secretsmanager";
-import * as s3 from '@aws-cdk/aws-s3';
-import * as s3Deploy from '@aws-cdk/aws-s3-deployment';
-import * as cloudfront from '@aws-cdk/aws-cloudfront';
-import * as sqs from '@aws-cdk/aws-sqs';
+import * as cdk from 'aws-cdk-lib'
+import * as ec2 from 'aws-cdk-lib/aws-ec2'
+import * as ecr from 'aws-cdk-lib/aws-ecr'
+import * as eks from 'aws-cdk-lib/aws-eks'
+import * as rds from 'aws-cdk-lib/aws-rds';
+import * as sm from "aws-cdk-lib/aws-secretsmanager";
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as s3Deploy from 'aws-cdk-lib/aws-s3-deployment';
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
+import { Construct } from 'constructs';
 
 import util from 'util';
 import { exec as oexec } from 'child_process';
@@ -49,7 +50,7 @@ export default class Service extends cdk.Stack {
 
   public URL: string
 
-  constructor(scope: cdk.Construct, id: string, props?: StackProps) {
+  constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id)
 
     if(!props?.cluster) {
@@ -112,7 +113,7 @@ export default class Service extends cdk.Stack {
 
     const CLUSTER_VAULT = sm.Secret.fromSecretAttributes(this, 'host', {
       secretArn: this.db?.secret?.secretArn
-    });
+    } as sm.SecretAttributes);
 
     let secrets = {}
     const decode = (str: string):string => Buffer.from(str, 'base64').toString('binary');
