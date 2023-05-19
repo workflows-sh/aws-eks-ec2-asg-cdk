@@ -4,9 +4,6 @@ import * as ecr from 'aws-cdk-lib/aws-ecr'
 import * as eks from 'aws-cdk-lib/aws-eks'
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as sm from "aws-cdk-lib/aws-secretsmanager";
-import * as s3 from 'aws-cdk-lib/aws-s3';
-import * as s3Deploy from 'aws-cdk-lib/aws-s3-deployment';
-import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import { Construct } from 'constructs';
 
@@ -86,31 +83,6 @@ export default class Service extends cdk.Stack {
 
   async initialize() {
 
-    // S3
-    const bucket = new s3.Bucket(this, `${this.id}-bucket`, {
-      publicReadAccess: true,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      websiteIndexDocument: "index.html"
-    });
-
-    // We can enable deployment from the local system using this
-    const src = new s3Deploy.BucketDeployment(this, `${this.id}-deployment`, {
-      sources: [s3Deploy.Source.asset("./sample-app/dist")],
-      destinationBucket: bucket
-    });
-
-    // Cloudfront
-    const cf = new cloudfront.CloudFrontWebDistribution(this, `${this.id}-cloudfront`, {
-      originConfigs: [
-        {
-          s3OriginSource: {
-            s3BucketSource: bucket
-          },
-          behaviors: [{isDefaultBehavior: true}]
-        },
-      ]
-    });
-
     const CLUSTER_VAULT = sm.Secret.fromSecretAttributes(this, 'host', {
       secretArn: this.db?.secret?.secretArn
     } as sm.SecretAttributes);
@@ -139,7 +111,6 @@ export default class Service extends cdk.Stack {
       REDIS_PORT: this.redis?.cluster?.attrRedisEndpointPort,
       MQ_URL: this.mq?.queueUrl,
       MQ_NAME: this.mq?.queueName,
-      CDN_URL: cf.distributionDomainName
     }, { ...secrets })
 
     const env = Object.keys(environment).map((e) => {
