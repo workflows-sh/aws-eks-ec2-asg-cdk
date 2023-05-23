@@ -24,7 +24,7 @@ async function run() {
   }>({
       type: 'input',
       name: 'STACK_REPO',
-      default: 'sample-app',
+      default: 'sample-expressjs-aws-eks-ec2-asg-cdk',
       message: 'What is the name of the application repo?'
     })
 

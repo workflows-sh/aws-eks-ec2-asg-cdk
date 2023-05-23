@@ -1,12 +1,12 @@
-import * as cdk from '@aws-cdk/core'
-import * as iam from '@aws-cdk/aws-iam'
-import * as ec2 from '@aws-cdk/aws-ec2'
-import * as eks from '@aws-cdk/aws-eks'
-import * as rds from '@aws-cdk/aws-rds'
-import * as sqs from '@aws-cdk/aws-sqs'
+import * as cdk from 'aws-cdk-lib';
+import * as iam from 'aws-cdk-lib/aws-iam'
+import * as ec2 from 'aws-cdk-lib/aws-ec2'
+import * as eks from 'aws-cdk-lib/aws-eks'
+import * as rds from 'aws-cdk-lib/aws-rds'
+import * as sqs from 'aws-cdk-lib/aws-sqs'
 import * as elasticache from './redis'
-import * as autoscaling from '@aws-cdk/aws-autoscaling'
-import { exec } from 'child_process'
+import * as autoscaling from 'aws-cdk-lib/aws-autoscaling'
+import { Construct } from 'constructs';
 
 interface StackProps {
   org: string
@@ -31,16 +31,16 @@ export default class Cluster extends cdk.Stack {
   public readonly cluster: eks.Cluster
   public readonly db: rds.ServerlessCluster
   public readonly mq: sqs.Queue
-  public readonly redis: cdk.Construct
+  public readonly redis: Construct
   public readonly bastion: ec2.BastionHostLinux
 
-  constructor(scope: cdk.Construct, id: string, props?: StackProps) {
+  constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id)
     this.id = id
     this.org = props?.org ?? 'cto-ai'
     this.env = props?.env ?? 'dev'
     this.key = props?.key ?? 'aws-eks-ec2-asg'
-    this.repo = props?.repo ?? 'sample-app'
+    this.repo = props?.repo ?? 'sample-expressjs-aws-eks-ec2-asg-cdk'
     this.tag = props?.tag ?? 'main'
     this.entropy = props?.entropy ?? '01012022'
 
@@ -57,7 +57,7 @@ export default class Cluster extends cdk.Stack {
         },
         {
           name: 'Private',
-          subnetType: ec2.SubnetType.PRIVATE,
+          subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
           cidrMask: 24,
         }
       ],
@@ -102,7 +102,7 @@ export default class Cluster extends cdk.Stack {
       role: workerRole,
       minCapacity: 1,
       maxCapacity: 10,
-      desiredCapacity: 3,
+      desiredCapacity: 1,
       blockDevices: [rootVolume],
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.M5, ec2.InstanceSize.XLARGE),
       machineImage: new eks.EksOptimizedImage({
@@ -127,7 +127,7 @@ export default class Cluster extends cdk.Stack {
       defaultDatabaseName: `${this.env}`,
       engine: rds.DatabaseClusterEngine.AURORA_MYSQL,
       scaling: { autoPause: cdk.Duration.seconds(0) },
-      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE },
+      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       securityGroups: [dbSecurityGroup],
       credentials: rds.Credentials.fromGeneratedSecret('root')
     });

@@ -1,13 +1,11 @@
-import * as cdk from '@aws-cdk/core'
-import * as ec2 from '@aws-cdk/aws-ec2'
-import * as ecr from '@aws-cdk/aws-ecr'
-import * as eks from '@aws-cdk/aws-eks'
-import * as rds from '@aws-cdk/aws-rds';
-import * as sm from "@aws-cdk/aws-secretsmanager";
-import * as s3 from '@aws-cdk/aws-s3';
-import * as s3Deploy from '@aws-cdk/aws-s3-deployment';
-import * as cloudfront from '@aws-cdk/aws-cloudfront';
-import * as sqs from '@aws-cdk/aws-sqs';
+import * as cdk from 'aws-cdk-lib'
+import * as ec2 from 'aws-cdk-lib/aws-ec2'
+import * as ecr from 'aws-cdk-lib/aws-ecr'
+import * as eks from 'aws-cdk-lib/aws-eks'
+import * as rds from 'aws-cdk-lib/aws-rds';
+import * as sm from "aws-cdk-lib/aws-secretsmanager";
+import * as sqs from 'aws-cdk-lib/aws-sqs';
+import { Construct } from 'constructs';
 
 import util from 'util';
 import { exec as oexec } from 'child_process';
@@ -49,7 +47,7 @@ export default class Service extends cdk.Stack {
 
   public URL: string
 
-  constructor(scope: cdk.Construct, id: string, props?: StackProps) {
+  constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id)
 
     if(!props?.cluster) {
@@ -72,7 +70,7 @@ export default class Service extends cdk.Stack {
     this.org = props?.org ?? 'cto-ai'
     this.env = props?.env ?? 'dev'
     this.key = props?.key ?? 'aws-eks-ec2-asg'
-    this.repo = props?.repo ?? 'sample-app'
+    this.repo = props?.repo ?? 'sample-expressjs-aws-eks-ec2-asg-cdk'
     this.tag = props?.tag ?? 'main'
     this.entropy = props?.entropy ?? '01012022'
 
@@ -85,34 +83,9 @@ export default class Service extends cdk.Stack {
 
   async initialize() {
 
-    // S3
-    const bucket = new s3.Bucket(this, `${this.id}-bucket`, {
-      publicReadAccess: true,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      websiteIndexDocument: "index.html"
-    });
-
-    // We can enable deployment from the local system using this
-    const src = new s3Deploy.BucketDeployment(this, `${this.id}-deployment`, {
-      sources: [s3Deploy.Source.asset("./sample-app/dist")],
-      destinationBucket: bucket
-    });
-
-    // Cloudfront
-    const cf = new cloudfront.CloudFrontWebDistribution(this, `${this.id}-cloudfront`, {
-      originConfigs: [
-        {
-          s3OriginSource: {
-            s3BucketSource: bucket
-          },
-          behaviors: [{isDefaultBehavior: true}]
-        },
-      ]
-    });
-
     const CLUSTER_VAULT = sm.Secret.fromSecretAttributes(this, 'host', {
       secretArn: this.db?.secret?.secretArn
-    });
+    } as sm.SecretAttributes);
 
     let secrets = {}
     const decode = (str: string):string => Buffer.from(str, 'base64').toString('binary');
@@ -138,7 +111,6 @@ export default class Service extends cdk.Stack {
       REDIS_PORT: this.redis?.cluster?.attrRedisEndpointPort,
       MQ_URL: this.mq?.queueUrl,
       MQ_NAME: this.mq?.queueName,
-      CDN_URL: cf.distributionDomainName
     }, { ...secrets })
 
     const env = Object.keys(environment).map((e) => {
