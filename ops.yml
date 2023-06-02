@@ -63,7 +63,7 @@ commands:
         - AWS_ACCESS_KEY_ID
         - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
-  - name: vault-aws-eks-ec2-asg-cdk:0.1.0
+  - name: vault-aws-eks-ec2-asg-cdk:0.1.1
     run: ./node_modules/.bin/ts-node /ops/src/vault.ts
     description: "manage secrets vault"
     env:
