@@ -33,61 +33,13 @@ async function run() {
 
   await ux.print(`\n🛠 Loading the latest tags for ${ux.colors.green(STACK_TYPE)} environment and ${ux.colors.green(STACK_REPO)} service...`)
 
-  async function retrieveCurrentlyDeployedImage(env: string, service: string): Promise<string> {
-    let ecsClusters: string[] = [];
-
-    try {
-      const commandOutput: Buffer = execSync(
-        `aws eks list-clusters --query "clusterArns[*]" --region $AWS_REGION`,
-        {
-          env: process.env
-        }
-      );
-
-      ecsClusters = JSON.parse(commandOutput.toString()) || [];
-    } catch (error) {
-      console.error("An error occurred while retrieving ECS clusters:", error);
-    }
-
-    let ecsCluster: string = ""
-    console.log("🚀 ~ file: deploy.ts:53 ~ retrieveCurrentlyDeployedImage ~ ecsClusters:", ecsClusters)
-
-    ecsClusters.forEach((clusterName: string) => {
-      const re = new RegExp(`cluster\/${env}`)
-      if (re.test(clusterName)) {
-        ecsCluster = clusterName
-      }
-    })
-
-    if (ecsCluster) {
-      console.log("🚀 ~ file: deploy.ts:62 ~ retrieveCurrentlyDeployedImage ~ ecsCluster:", ecsCluster)
-      // const ecsTasks: string[] = JSON.parse(execSync(
-      //   `aws ecs list-tasks --cluster ${ecsCluster} --service-name ${service} --query "taskArns" --region $AWS_REGION`,
-      //   {
-      //     env: process.env
-      //   }
-      // ).toString()) || [];
-
-      // for (const ecsTask of ecsTasks) {
-      //   try {
-      //     const image: string = execSync(
-      //       `aws ecs describe-tasks --region $AWS_REGION --query=tasks[0].containers[0].image --cluster ${ecsCluster} --tasks ${ecsTask}`,
-      //       {
-      //         env: process.env
-      //       }
-      //     ).toString().trim();
-
-      //     if (image) {
-      //       return image.replace(/.+:/, "").replace(/"/, "");
-      //     }
-      //   } catch (error) {
-      //     console.error("An error occurred while retrieving the image:", error);
-      //   }
-      // }
-    }
-
-    return ""
-  }
+  // TODO: Write function to return currently running image name and display it to the user.
+  //
+  // async function retrieveCurrentlyDeployedImage(env: string, service: string): Promise<string> {
+  //   return ""
+  // }
+  // const currentImage = await retrieveCurrentlyDeployedImage(STACK_ENV, STACK_REPO)
+  // await ux.print(`\n🖼️  Currently deployed image - ${ux.colors.green(currentImage)}\n`)
 
   const ecrImages: string[] = JSON.parse(execSync(
     `aws ecr describe-images --region=$AWS_REGION --repository-name ${ecrRepoName} --query "reverse(sort_by(imageDetails,& imagePushedAt))[*].imageTags[0]"`,
@@ -96,8 +48,6 @@ async function run() {
     }
   ).toString().trim()) || []
 
-  const currentImage = await retrieveCurrentlyDeployedImage(STACK_ENV, STACK_REPO)
-  await ux.print(`\n🖼️  Currently deployed image - ${ux.colors.green(currentImage)}\n`)
 
   const defaultImage = ecrImages.length ? ecrImages[0] : undefined
   const imageTagLimit = 20
@@ -124,7 +74,7 @@ async function run() {
   } else {
     ({ STACK_TAG } = await stackTagPrompt(
       ecrImages.slice(0, ecrImages.length < imageTagLimit ? ecrImages.length : imageTagLimit),
-      currentImage || defaultImage
+      defaultImage
     ))
   }
 
