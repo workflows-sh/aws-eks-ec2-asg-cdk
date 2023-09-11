@@ -123,7 +123,7 @@ async function run() {
   const getKubeConfig = await pexec('cat ~/.kube/config')
   process.env.KUBE_CONFIG = getKubeConfig.stdout;
 
-  await exec(`npm run cdk diff ${STACKS[STACK_ENV].join(' ')}`, {
+  await exec(`npm run cdk deploy ${STACKS[STACK_ENV].join(' ')}`, {
     env: { 
       ...process.env, 
       STACK_TYPE: STACK_TYPE, 
