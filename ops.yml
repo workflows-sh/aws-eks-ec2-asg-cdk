@@ -15,7 +15,7 @@ commands:
         - DEV_AWS_EKS_EC2_ASG_CDK_STATE
         - STG_AWS_EKS_EC2_ASG_CDK_STATE
         - PRD_AWS_EKS_EC2_ASG_CDK_STATE
-  - name: deploy-aws-eks-ec2-asg-cdk:0.1.3
+  - name: deploy-aws-eks-ec2-asg-cdk:0.1.4
     run: ./node_modules/.bin/ts-node /ops/src/deploy.ts
     description: "deploy to an environment"
     env:
