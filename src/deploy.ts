@@ -1,7 +1,6 @@
 import util from 'util';
 import { ux, sdk } from '@cto.ai/sdk';
-import { exec as oexec, execSync } from 'child_process';
-import { stackEnvPrompt, stackRepoPrompt, stackTagPrompt } from './prompts';
+import { exec as oexec } from 'child_process';
 const pexec = util.promisify(oexec);
 
 async function run() {
@@ -9,76 +8,35 @@ async function run() {
   const STACK_TYPE = process.env.STACK_TYPE || 'aws-eks-ec2-asg';
   const STACK_TEAM = process.env.OPS_TEAM_NAME || 'private'
 
-  const { STACK_ENV } = await stackEnvPrompt()
-  const { STACK_REPO } = await stackRepoPrompt()
+  sdk.log(`🛠  Loading the ${ux.colors.white(STACK_TYPE)} stack for the ${ux.colors.white(STACK_TEAM)}...`)
 
-  const ecrRepoName: string = `${STACK_REPO}-${STACK_TYPE}`
-
-  // Validate if the AWS Creds are set.
-  try {
-    const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
-    const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
-
-    if (accessKeyId && secretAccessKey) {
-      console.log('AWS credentials are set.');
-      // Proceed with the rest of the deployment logic
-    } else {
-      console.log('AWS credentials are not set.');
-      return;
-    }
-  } catch (error) {
-    console.error('Invalid credentials:', error);
-    return;
-  }
-
-  await ux.print(`\n🛠 Loading the latest tags for ${ux.colors.green(STACK_TYPE)} environment and ${ux.colors.green(STACK_REPO)} service...`)
-
-  // TODO: Write function to return currently running image name and display it to the user.
-  //
-  // async function retrieveCurrentlyDeployedImage(env: string, service: string): Promise<string> {
-  //   return ""
-  // }
-  // const currentImage = await retrieveCurrentlyDeployedImage(STACK_ENV, STACK_REPO)
-  // await ux.print(`\n🖼️  Currently deployed image - ${ux.colors.green(currentImage)}\n`)
-
-  const ecrImages: string[] = JSON.parse(execSync(
-    `aws ecr describe-images --region=$AWS_REGION --repository-name ${ecrRepoName} --query "reverse(sort_by(imageDetails,& imagePushedAt))[*].imageTags[0]"`,
-    {
-      env: process.env
-    }
-  ).toString().trim()) || []
-
-
-  const defaultImage = ecrImages.length ? ecrImages[0] : undefined
-  const imageTagLimit = 20
-  let { STACK_TAG }: any = ''
-
-  const { STACK_TAG_CUSTOM } = await ux.prompt<{
-    STACK_TAG_CUSTOM: boolean
+  const { STACK_ENV } = await ux.prompt<{
+    STACK_ENV: string
   }>({
-    type: 'confirm',
-    name: 'STACK_TAG_CUSTOM',
-    default: false,
-    message: 'Do you want to deploy a custom image?'
-  });
+      type: 'input',
+      name: 'STACK_ENV',
+      default: 'dev',
+      message: 'What is the name of the environment?'
+    })
 
-  if (STACK_TAG_CUSTOM){
-    ({ STACK_TAG } = await ux.prompt<{
-      STACK_TAG: string
-    }>({
+  const { STACK_REPO } = await ux.prompt<{
+    STACK_REPO: string
+  }>({
+      type: 'input',
+      name: 'STACK_REPO',
+      default: 'sample-expressjs-aws-eks-ec2-asg-cdk',
+      message: 'What is the name of the application repo?'
+    })
+
+  const { STACK_TAG } = await ux.prompt<{
+    STACK_TAG: string
+  }>({
       type: 'input',
       name: 'STACK_TAG',
-      message: 'What is the name of the tag or branch?',
-      allowEmpty: false
-    }))
-  } else {
-    ({ STACK_TAG } = await stackTagPrompt(
-      ecrImages.slice(0, ecrImages.length < imageTagLimit ? ecrImages.length : imageTagLimit),
-      defaultImage
-    ))
-  }
+      default: 'main',
+      message: 'What is the name of the tag or branch?'
+    })
 
-  await ux.print(`\n🛠 Loading the ${ux.colors.white(STACK_TYPE)} stack for the ${ux.colors.white(STACK_TEAM)}...\n`)
   const STACKS:any = {
     'dev': [`${STACK_REPO}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
     'stg': [`${STACK_REPO}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_TYPE}`, `${STACK_ENV}-${STACK_REPO}-${STACK_TYPE}`],
