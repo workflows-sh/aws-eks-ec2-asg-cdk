@@ -138,11 +138,7 @@ async function run() {
       console.log(`✅ Saved the following state in your ${ux.colors.white(STACK_TEAM)} config as ${ux.colors.white(CONFIG_KEY)}:`)
       console.log(outputs)
 
-      console.log('\n🚀 Deploying a hello world application to cluster to finalize setup...')
-      await exec('kubectl apply -f src/kubectl/hello-world/')
-        .catch(err => console.log(err))
-
-      console.log('\n✅ Deployed. Load Balancer is provisioning...')
+      console.log('\n✅ Load Balancer is provisioning...')
       console.log(`👀 Check your ${ux.colors.white('AWS')} dashboard or Lens for status.`)
       console.log(`\n${ux.colors.italic.white('Happy Workflowing!')}\n`)
 
