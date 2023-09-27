@@ -22,7 +22,7 @@
   "dependencies": {
     "@cto.ai/sdk": "^2.4.3",
     "@kubernetes/client-node": "^0.16.1",
-    "aws-cdk": "2.79.1",
+    "aws-cdk": "2.98.0",
     "aws-cdk-lib": "2.98.0",
     "commonjs": "^0.0.1",
     "constructs": "^10.2.28",
