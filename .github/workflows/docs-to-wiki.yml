@@ -4,6 +4,9 @@ on:
     branches:
       - main
       - DEVREL-34-document-basic-usage
+    paths:
+      - "README.md"
+      - "docs/**"
   workflow_dispatch:
 
 jobs:
