@@ -1,12 +1,12 @@
 
 ![aws-eks-ec2](https://user-images.githubusercontent.com/24816990/174409888-488bb9b1-a200-4afd-aeb3-320680f49274.svg)
 
+# Workflow Stack: AWS-EKS-EC2-ASG-CDK via CTO.ai
 
-# Overview
+This repo contains a complete, functional PaaS workflow with integrated GitOps and ChatOps features. Designed for deployment to AWS infrastructure, this workflow supports EKS on EC2, Aurora, SQS, Redis, and Autoscaling—all orchestrated by CDK.
 
-This repo includes a complete repo with the PaaS workflow with GitOps / ChatOps features that supports EKS on EC2, Aurora, SQS, Redis, Autoscaling via CDK. 
+<!-- ---
 
----
 ## Table of contents
 
 - [Overview](#overview)
@@ -28,9 +28,7 @@ This repo includes a complete repo with the PaaS workflow with GitOps / ChatOps 
   - [Reporting bugs and Contributing](#reporting-bugs-and-contributing)
   - [Learn more](#learn-more)
   - [Other questions?](#other-questions)
-  - [License](#license)
-
----
+  - [License](#license) -->
 
 ## Prerequisites
 
@@ -39,18 +37,16 @@ This repo includes a complete repo with the PaaS workflow with GitOps / ChatOps 
 - [Docker](https://docs.docker.com/get-docker/), [AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html), and [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) installed on your machine.
 - [NVM Installed](https://github.com/nvm-sh/nvm)
 
----
-
-## Demo 
+## Demo
 
 You can run and deploy the AWS-ECS-Fargate Workflow directly on our [Platform](https://cto.ai/), kindly follow the steps below to get started 🚀
 
-## Latest Version 
+## Latest Version
 
 The AWS EC2 Auto Scaling group Workflow is running on the latest version
 
 
-## Getting Started 
+## Getting Started
 
 ```
 git clone https://github.com/workflows-sh/aws-eks-ec2-asg.git
@@ -62,86 +58,32 @@ cd aws-eks-ec2-asg
 
 Before you can deploy this Workflow, you need to [Setup your account on CTO.ai](https://cto.ai/docs/setup-flow)
 
-### Create Secrets from Settings 
+### Create Secrets from Settings
 
 Secrets are encrypted environment variables that CTO.ai utilizes within your workflow to build and run your application and deployments. [Follow this guide to create secrets from settings.](https://cto.ai/docs/aws-eks-ec2#create-secret-from-settings), and also [generate your Github token](https://cto.ai/docs/aws-eks-ec2#generate-github-token)
-
----
-
-## Usage 
-
-Follow the following steps below to configure and deploy your AWS EC2-Elastic Kubernetes Service Workflow
-
-### Build and Run Pipelines 
-
-- [Build Pipelines locally with the Workflow CLI](https://cto.ai/docs/aws-eks-ec2#build-pipelines-locally-with-the-ctoai-cli)
-
-
-- [Run Pipelines locally with the Workflow CLI](https://cto.ai/docs/aws-eks-ec2#run-pipelines-locally-with-the-ctoai-cli)
-
-
-### Run and Setup your Infrastructure
-
-In your AWS EKS EC2 workflow, [build and set up your infrastructure using the `ops run -b .` command. This will provision your AWS-EKS EC2 stacks using Cloud Formation](https://cto.ai/docs/aws-eks-ec2#run-and-setup-your-infrastructure)
-
-### View changes on CloudFormation 
-
-- [Get a detailed overview of your entire Stack on CloudFormation](https://cto.ai/docs/aws-eks-ec2#view-changes-on-aws-cloudformation)
-
-
-
-### View EC2 instances on AWS 
-
-Get insights to your EC2 instances on AWS. [View EC2 instances on AWS](https://cto.ai/docs/aws-eks-ec2#view-ec2-instances-on-aws)
-
-
-### View Elastic Kubernetes Service Cluster
-
-See your [EKS Cluster resources, deployments, and authentication](https://cto.ai/docs/aws-eks-ec2#view-elastic-kubernetes-service-cluster)
-
-
 
 ### View Auto Scaling groups
 
 Schedule the scaling [actions that proactively increases and decreases capacity to match the load forecast](https://cto.ai/docs/aws-eks-ec2#view-auto-scaling-groups)
 
+## Usage
 
----
+The following steps describe key features of this workflow and how to interact with them.
 
-## Getting help 
+## Support and Community
 
-CTO.ai AWS-EC2-ASG Workflow is an open-source project and is supported by the community. 
+### Getting help
 
-Learn more about CTO.ai community support channels [here](https://cto.ai/community)
+This `aws-eks-ec2-asg` workflow, built for the CTO.ai platform, is an open-source project and is supported by the community. Our documentation also contains a guide for [using this workflow](https://cto.ai/docs/aws-eks-ec2-asg). If these resources are unable to lead you to the answers you need, please feel free to [open an issue](https://github.com/workflows-sh/aws-eks-ec2-asg-cdk/issues) on this repository describing the question or problem you're facing.
 
-- Slack: https://cto.ai/community
+If you need further help using the our platform, the [Contact Us](https://cto.ai/docs/contact-us) page in our docs lists our current support channels and contact information. We'd love to hear from you!
 
+### Contributing
 
-## Reporting bugs and Contributing 
+If you've encountered a bug, have a suggestion for improving this stack, or would like to contribute to this project, we'd love to hear from you! Feel free to open an issue or [submit a Pull Request](https://github.com/workflows-sh/aws-eks-ec2-asg-cdk/pulls) to this project. Before contributing, please refer to our [Contributing](Contributing.md) guide to understand our standards and processes.
 
-Feel free to submit PRs or to fill issues. Every kind of help is appreciated.
+## License
 
-Kindly check our [Contributing guide](https://github.com/workflows-sh/aws-eks-ec2-asg/blob/main/Contributing.md) on how to propose bugfixes and improvements, and submitting pull requests to the project.
+Copyright &copy; 2022-2023, Hack Capital Ventures Inc. *d/b/a* CTO.ai
 
-
-- View issues related to this image in our [GitHub repository issues tracker](https://github.com/workflows-sh/aws-eks-ec2-asg/issues)
-
-
-## Learn more 
-
-- Read the manual on our [Docs](https://cto.ai/docs/aws-eks-ec2)
-
----
-
-## Other questions?
-
-Check out our [FAQ](https://cto.ai/docs/faq), send us an [email](https://cto.ai/docs/contact-support), or open an issue with your question. We'd love to hear from you!
-
-
-## License 
-
-&copy; CTO.ai, Inc., 2022
-
-Distributed under MIT License (`The MIT License`).
-
-See [LICENSE](License) for more information.
+Distributed under the MIT License. See [LICENSE](License) for more information.
