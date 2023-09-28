@@ -1,3 +1,19 @@
+![aws-eks-ec2 Banner Image](_assets/banner.svg)
+
+# Docs for AWS-EKS-EC2-ASG-CDK Workflow Stack
+
+### Set Up your Account on CTO.ai
+
+Before you can deploy this Workflow, you need to [Setup your account on CTO.ai](https://cto.ai/docs/setup-flow)
+
+### Create Secrets from Settings
+
+Secrets are encrypted environment variables that CTO.ai utilizes within your workflow to build and run your application and deployments. [Follow this guide to create secrets from settings.](https://cto.ai/docs/aws-eks-ec2#create-secret-from-settings), and also [generate your Github token](https://cto.ai/docs/aws-eks-ec2#generate-github-token)
+
+### View Auto Scaling groups
+
+Schedule the scaling [actions that proactively increases and decreases capacity to match the load forecast](https://cto.ai/docs/aws-eks-ec2#view-auto-scaling-groups)
+
 Follow the following steps below to configure and deploy your AWS EC2-Elastic Kubernetes Service Workflow
 
 ### Build and Run Pipelines

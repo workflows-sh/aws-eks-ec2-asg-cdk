@@ -1,34 +1,9 @@
 
 ![aws-eks-ec2](https://user-images.githubusercontent.com/24816990/174409888-488bb9b1-a200-4afd-aeb3-320680f49274.svg)
 
-# Workflow Stack: AWS-EKS-EC2-ASG-CDK via CTO.ai
+# Stack: AWS-EKS-EC2-ASG-CDK via CTO.ai
 
 This repo contains a complete, functional PaaS workflow with integrated GitOps and ChatOps features. Designed for deployment to AWS infrastructure, this workflow supports EKS on EC2, Aurora, SQS, Redis, and Autoscaling—all orchestrated by CDK.
-
-<!-- ---
-
-## Table of contents
-
-- [Overview](#overview)
-  - [Table of contents](#table-of-contents)
-  - [Prerequisites](#prerequisites)
-  - [Demo](#demo)
-  - [Latest Version](#latest-version)
-  - [Getting Started](#getting-started)
-    - [Set Up your Account on CTO.ai](#set-up-your-account-on-ctoai)
-    - [Create Secrets from Settings](#create-secrets-from-settings)
-  - [Usage](#usage)
-    - [Build and Run Pipelines](#build-and-run-pipelines)
-    - [Run and Setup your Infrastructure](#run-and-setup-your-infrastructure)
-    - [View changes on CloudFormation](#view-changes-on-cloudformation)
-    - [View EC2 instances on AWS](#view-ec2-instances-on-aws)
-    - [View Elastic Kubernetes Service Cluster](#view-elastic-kubernetes-service-cluster)
-    - [View Auto Scaling groups](#view-auto-scaling-groups)
-  - [Getting help](#getting-help)
-  - [Reporting bugs and Contributing](#reporting-bugs-and-contributing)
-  - [Learn more](#learn-more)
-  - [Other questions?](#other-questions)
-  - [License](#license) -->
 
 ## Prerequisites
 
@@ -37,38 +12,22 @@ This repo contains a complete, functional PaaS workflow with integrated GitOps a
 - [Docker](https://docs.docker.com/get-docker/), [AWS CDK](https://docs.aws.amazon.com/cdk/v2/guide/getting_started.html), and [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html) installed on your machine.
 - [NVM Installed](https://github.com/nvm-sh/nvm)
 
-## Demo
+## Quick Start
 
-You can run and deploy the AWS-ECS-Fargate Workflow directly on our [Platform](https://cto.ai/), kindly follow the steps below to get started 🚀
+To get started with this stack, you can follow the steps below to orchestrate the deployment of this stack to your AWS infrastructure, using the CTO.ai platform.
 
-## Latest Version
+### Clone the repo
 
-The AWS EC2 Auto Scaling group Workflow is running on the latest version
-
-
-## Getting Started
-
+```bash
+git clone https://github.com/workflows-sh/aws-eks-ec2-asg-cdk.git
+cd aws-eks-ec2-asg-cdk
 ```
-git clone https://github.com/workflows-sh/aws-eks-ec2-asg.git
-
-cd aws-eks-ec2-asg
-```
-
-### Set Up your Account on CTO.ai
-
-Before you can deploy this Workflow, you need to [Setup your account on CTO.ai](https://cto.ai/docs/setup-flow)
-
-### Create Secrets from Settings
-
-Secrets are encrypted environment variables that CTO.ai utilizes within your workflow to build and run your application and deployments. [Follow this guide to create secrets from settings.](https://cto.ai/docs/aws-eks-ec2#create-secret-from-settings), and also [generate your Github token](https://cto.ai/docs/aws-eks-ec2#generate-github-token)
-
-### View Auto Scaling groups
-
-Schedule the scaling [actions that proactively increases and decreases capacity to match the load forecast](https://cto.ai/docs/aws-eks-ec2#view-auto-scaling-groups)
 
 ## Usage
 
-The following steps describe key features of this workflow and how to interact with them.
+You can find detailed instructions for using this workflow stack in the repo wiki.
+
+- [AWS-EKS-EC2-ASG-CDK Workflow Stack Documentation](https://github.com/workflows-sh/aws-eks-ec2-asg-cdk/wiki)
 
 ## Support and Community
 

@@ -33,7 +33,7 @@ jobs:
       # that the wiki repo is always in sync with the base repo.
       - name: Copy docs/ to wiki/
         run: |
-          rm -rf wiki/*
+          rm -rf wiki/*.md
 
           cp -r repo/docs/* wiki/
           mv wiki/README.md wiki/Home.md
