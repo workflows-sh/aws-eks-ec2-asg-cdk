@@ -26,8 +26,6 @@
     "aws-cdk-lib": "2.98.0",
     "commonjs": "^0.0.1",
     "constructs": "^10.2.28",
-    "express": "^4.17.1",
-    "minipass": "^3.3.5",
     "yargs": "^17.7.2",
     "source-map-support": "^0.5.19",
     "string-type-convertor": "^1.2.0"
