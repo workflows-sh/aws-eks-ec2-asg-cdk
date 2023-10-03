@@ -1,40 +1,53 @@
-![aws-eks-ec2 Banner Image](_assets/banner.svg)
+![aws-eks-ec2 Banner Image](https://raw.githubusercontent.com/wiki/workflows-sh/aws-eks-ec2-asg-cdk/_assets/banner.svg)
 
-# Docs for AWS-EKS-EC2-ASG-CDK Workflow Stack
+## AWS-EKS-EC2-ASG-CDK Workflow Stack Documentation
 
-### Set Up your Account on CTO.ai
+This repo contains a complete, functional PaaS workflow with integrated GitOps and ChatOps features. Designed for deployment to AWS infrastructure, this workflow supports EKS on EC2, Aurora, SQS, Redis, and Autoscaling—all orchestrated by CDK.
 
-Before you can deploy this Workflow, you need to [Setup your account on CTO.ai](https://cto.ai/docs/setup-flow)
+## Prerequisites
 
-### Create Secrets from Settings
+### Add environment variables to Secrets Store
 
-Secrets are encrypted environment variables that CTO.ai utilizes within your workflow to build and run your application and deployments. [Follow this guide to create secrets from settings.](https://cto.ai/docs/aws-eks-ec2#create-secret-from-settings), and also [generate your Github token](https://cto.ai/docs/aws-eks-ec2#generate-github-token)
+> Resource: [Using Secrets and Configs via Dashboard](https://cto.ai/docs/secrets-and-configs-dashboard)
 
-### View Auto Scaling groups
+Create new environment variables via your Secrets Store on the CTO.ai Dashboard, one for each of the following keys:
 
-Schedule the scaling [actions that proactively increases and decreases capacity to match the load forecast](https://cto.ai/docs/aws-eks-ec2#view-auto-scaling-groups)
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_ACCOUNT_NUMBER`
+- `GITHUB_TOKEN`
 
-Follow the following steps below to configure and deploy your AWS EC2-Elastic Kubernetes Service Workflow
+This wiki has more information on [generating your AWS and GitHub credentials](https://github.com/workflows-sh/aws-eks-ec2-asg-cdk/wiki/Generating-access-tokens).
 
-### Build and Run Pipelines
+### Install the repo locally
 
-- [Build Pipelines locally with the Workflow CLI](https://cto.ai/docs/aws-eks-ec2#build-pipelines-locally-with-the-ctoai-cli)
+Clone the GitHub repository for this workflow stack locally, then change in to the directory:
 
-- [Run Pipelines locally with the Workflow CLI](https://cto.ai/docs/aws-eks-ec2#run-pipelines-locally-with-the-ctoai-cli)
+```bash
+git clone https://github.com/workflows-sh/aws-eks-ec2-asg-cdk.git
+cd aws-eks-ec2-asg-cdk
+```
 
-### Run and Setup your Infrastructure
+## Usage
 
-In your AWS EKS EC2 workflow, [build and set up your infrastructure using the `ops run -b .` command. This will provision your AWS-EKS EC2 stacks using Cloud Formation](https://cto.ai/docs/aws-eks-ec2#run-and-setup-your-infrastructure)
+### Build Pipelines locally with CTO.ai CLI
 
-### View changes on CloudFormation
+Run the following CLI command to build the repo's Pipelines workflow locally:
 
-- [Get a detailed overview of your entire Stack on CloudFormation](https://cto.ai/docs/aws-eks-ec2#view-changes-on-aws-cloudformation)
+```bash
+ops build .
+```
 
-### View EC2 instances on AWS
+Then, when prompted, select the `sample-app-pipeline` workflow from the list. This will build the workflow locally (for use or sharing) and build the workflow's Docker image from its `Dockerfile`.
 
-Get insights to your EC2 instances on AWS. [View EC2 instances on AWS](https://cto.ai/docs/aws-eks-ec2#view-ec2-instances-on-aws)
+The resulting Docker image will be tagged with the name and version specified in the workflow's `ops.yml` file.
 
+### Run Pipelines locally with CTO.ai CLI
 
-### View Elastic Kubernetes Service Cluster
+Run the following CLI command to run the repo's Pipelines workflow locally:
 
-See your [EKS Cluster resources, deployments, and authentication](https://cto.ai/docs/aws-eks-ec2#view-elastic-kubernetes-service-cluster)
+```bash
+ops run .
+```
+
+Then, when prompted, select the `sample-app-pipeline` workflow from the list. This will run the workflow locally, using the Docker image built in the previous step.
