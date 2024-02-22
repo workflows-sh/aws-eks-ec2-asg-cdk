@@ -4,6 +4,7 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2'
 import * as eks from 'aws-cdk-lib/aws-eks'
 import * as rds from 'aws-cdk-lib/aws-rds'
 import * as sqs from 'aws-cdk-lib/aws-sqs'
+import { KubectlV27Layer } from '@aws-cdk/lambda-layer-kubectl-v27';
 import * as elasticache from './redis'
 import * as autoscaling from 'aws-cdk-lib/aws-autoscaling'
 import { Construct } from 'constructs';
@@ -84,7 +85,8 @@ export default class Cluster extends cdk.Stack {
       vpc: vpc,
       defaultCapacity: 0,
       defaultCapacityInstance: ec2.InstanceType.of(ec2.InstanceClass.M5, ec2.InstanceSize.XLARGE),
-      version: eks.KubernetesVersion.V1_21,
+      version: eks.KubernetesVersion.V1_27,
+      kubectlLayer: new KubectlV27Layer(this, 'kubectl'),
       mastersRole: new iam.Role(this, 'MastersRole', { assumedBy: new iam.AccountRootPrincipal() })
     });
 
