@@ -16,6 +16,7 @@ const convert = require('string-type-convertor');
 interface StackProps {
   org: string
   env: string
+  repoOrg?: string
   repo: string
   tag: string
   key: string
@@ -26,13 +27,14 @@ interface StackProps {
   redis: any | undefined // todo @kc - fix this
   db: rds.ServerlessCluster | undefined
   mq: sqs.Queue | undefined
- }
+}
 
 export default class Service extends cdk.Stack {
 
   public readonly id: string
   public readonly org: string
   public readonly env: string
+  public readonly repoOrg: string | undefined
   public readonly repo: string
   public readonly tag: string
   public readonly key: string
@@ -50,19 +52,19 @@ export default class Service extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id)
 
-    if(!props?.cluster) {
+    if (!props?.cluster) {
       throw new Error('You must provide a Cluster for Service')
     }
-    if(!props?.registry) {
+    if (!props?.registry) {
       throw new Error('You must provide a Registry for Service')
     }
-    if(!props?.db) {
+    if (!props?.db) {
       throw new Error('You must provide a db for Service')
     }
-    if(!props?.redis) {
+    if (!props?.redis) {
       throw new Error('You must provide a redis for Service')
     }
-    if(!props?.mq) {
+    if (!props?.mq) {
       throw new Error('You must provide a mq for Service')
     }
 
@@ -70,6 +72,7 @@ export default class Service extends cdk.Stack {
     this.org = props?.org ?? 'cto-ai'
     this.env = props?.env ?? 'dev'
     this.key = props?.key ?? 'aws-eks-ec2-asg'
+    this.repoOrg = props?.repoOrg ?? 'workflows-sh'
     this.repo = props?.repo ?? 'sample-expressjs-aws-eks-ec2-asg-cdk'
     this.tag = props?.tag ?? 'main'
     this.entropy = props?.entropy ?? '01012022'
@@ -88,17 +91,17 @@ export default class Service extends cdk.Stack {
     } as sm.SecretAttributes);
 
     let secrets = {}
-    const decode = (str: string):string => Buffer.from(str, 'base64').toString('binary');
+    const decode = (str: string): string => Buffer.from(str, 'base64').toString('binary');
 
     try {
       const VAULT_KEY = `${this.env}-${this.key}`
-      const vault = await pexec(`kubectl get secret ${VAULT_KEY} -o json`) 
-      const data = JSON.parse(vault.stdout); 
-      for(let index of Object.keys(data.data)){
-          let e = decode(data.data[index])
-          secrets[index] = e
+      const vault = await pexec(`kubectl get secret ${VAULT_KEY} -o json`)
+      const data = JSON.parse(vault.stdout);
+      for (let index of Object.keys(data.data)) {
+        let e = decode(data.data[index])
+        secrets[index] = e
       }
-    } catch(e) {
+    } catch (e) {
       //console.log('There was an error fetching secrets from the cluster vault:', e)
     }
 
@@ -121,11 +124,15 @@ export default class Service extends cdk.Stack {
 
       const dManifest = {
         apiVersion: 'apps/v1',
-        kind: 'Deployment', 
+        kind: 'Deployment',
         metadata: {
           name: `${this.repo}`,
           labels: {
-            'app.kubernetes.io/name': `load-balancer-${this.repo}`
+            'app.kubernetes.io/name': `load-balancer-${this.repo}`,
+            'dora-org': this.repoOrg,
+            'dora-repo': this.repo,
+            'dora-branch': this.tag,
+            'dora-commit': this.tag
           },
         },
         spec: {
@@ -157,24 +164,24 @@ export default class Service extends cdk.Stack {
 
       const sManifest = {
         apiVersion: 'v1',
-          kind: 'Service',
-          metadata: {
-            name: `${this.repo}-service`,
-            labels: {
-              'app.kubernetes.io/name': `load-balancer-${this.repo}`
-            },
+        kind: 'Service',
+        metadata: {
+          name: `${this.repo}-service`,
+          labels: {
+            'app.kubernetes.io/name': `load-balancer-${this.repo}`
           },
-          spec: {
-            selector: {
-              'app.kubernetes.io/name': `load-balancer-${this.repo}`
-            },
-            ports: [{
-              'protocol': 'TCP',
-              'port': 80,
-              'targetPort': convert(environment.PORT) || 3000
-            }],
-            type: 'LoadBalancer'
-          }
+        },
+        spec: {
+          selector: {
+            'app.kubernetes.io/name': `load-balancer-${this.repo}`
+          },
+          ports: [{
+            'protocol': 'TCP',
+            'port': 80,
+            'targetPort': convert(environment.PORT) || 3000
+          }],
+          type: 'LoadBalancer'
+        }
       }
 
       // deployment

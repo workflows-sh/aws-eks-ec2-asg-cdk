@@ -46,7 +46,7 @@ export default class Cluster extends cdk.Stack {
     this.entropy = props?.entropy ?? '01012022'
 
     // todo @kc make AZ a StackProp
-    const vpc = new ec2.Vpc(this, `${this.id}-vpc`, { 
+    const vpc = new ec2.Vpc(this, `${this.id}-vpc`, {
       cidr: '10.0.0.0/16',
       natGateways: 1,
       maxAzs: 3,
@@ -62,7 +62,7 @@ export default class Cluster extends cdk.Stack {
           cidrMask: 24,
         }
       ],
-    }); 
+    });
 
     const bastionSecurityGroup = new ec2.SecurityGroup(this, `${this.id}-bastion-sg`, {
       vpc: vpc,
@@ -96,7 +96,7 @@ export default class Cluster extends cdk.Stack {
     };
 
     // IAM role for our EC2 worker nodes
-    const workerRole = new iam.Role(this, `${this.id}-workers` , {
+    const workerRole = new iam.Role(this, `${this.id}-workers`, {
       assumedBy: new iam.ServicePrincipal('ec2.amazonaws.com')
     });
 
@@ -145,9 +145,14 @@ export default class Cluster extends cdk.Stack {
     this.db = db;
     this.mq = mq;
 
-    new cdk.CfnOutput(this, `${this.id}VpcId`, { value: this.vpc.vpcId})
-    new cdk.CfnOutput(this, `${this.id}ClusterArn`, { value: this.cluster.clusterArn})
-    new cdk.CfnOutput(this, `${this.id}DbArn`, { value: this.db?.clusterArn})
+    new cdk.CfnOutput(this, `${this.id}VpcId`, { value: this.vpc.vpcId })
+    new cdk.CfnOutput(this, `${this.id}ClusterArn`, { value: this.cluster.clusterArn })
+    if (this.cluster.kubectlRole) {
+      new cdk.CfnOutput(this, `${this.id}ClusterKubectlRoleArn`, { value: this.cluster.kubectlRole.roleArn })
+    }
+    const kubectlProvider = this.cluster.stack.node.tryFindChild('@aws-cdk--aws-eks.KubectlProvider') as eks.KubectlProvider;
+    new cdk.CfnOutput(this, 'ClusterKubectlProviderHandlerRole', { value: kubectlProvider.handlerRole.roleArn });
+    new cdk.CfnOutput(this, `${this.id}DbArn`, { value: this.db?.clusterArn })
 
   }
 }

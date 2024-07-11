@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import Cluster from './cluster'
 import Service from './service'
 import Registry from './registry'
+import Dora from './dora'
 
 interface StackProps {
   org: string
@@ -51,7 +52,7 @@ export class Stack{
       repo: this.repo,
       tag: this.tag,
       entropy: this.entropy
-    }); 
+    });
     const stg = new Cluster(app, `stg-${this.key}`, {
       org: this.org,
       env: this.env,
@@ -59,7 +60,7 @@ export class Stack{
       repo: this.repo,
       tag: this.tag,
       entropy: this.entropy
-    }); 
+    });
     const prd = new Cluster(app, `prd-${this.key}`, {
       org: this.org,
       env: this.env,
@@ -67,7 +68,20 @@ export class Stack{
       repo: this.repo,
       tag: this.tag,
       entropy: this.entropy
-    }); 
+    });
+
+    // deploy dora controller in dev cluster
+    const devDora = new Dora(app, `dev-dora-controller-${this.key}`)
+    await devDora.initialize()
+
+    // deploy dora controller in stg cluster
+    const stgDora = new Dora(app, `stg-dora-controller-${this.key}`)
+    await stgDora.initialize()
+
+    // deploy dora controller in prd cluster
+    const prdDora = new Dora(app, `prd-dora-controller-${this.key}`)
+    await prdDora.initialize()
+
     // instantiate a service in dev cluster
     const devService = new Service(app, `dev-${this.repo}-${this.key}`, {
       org: this.org,

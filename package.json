@@ -27,6 +27,7 @@
     "aws-cdk-lib": "2.98.0",
     "commonjs": "^0.0.1",
     "constructs": "^10.2.28",
+    "js-yaml": "^4.1.0",
     "source-map-support": "^0.5.19",
     "string-type-convertor": "^1.2.0",
     "yargs": "^17.7.2"
