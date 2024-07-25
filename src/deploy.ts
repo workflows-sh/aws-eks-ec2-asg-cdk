@@ -204,14 +204,5 @@ async function run() {
 
 }
 
-// // custom promisify exec that pipes stdout too
-// async function exec(cmd, env?: any | null) {
-//   return new Promise(function (resolve, reject) {
-//     const child = oexec(cmd, env)
-//     child.stdout.pipe(process.stdout)
-//     child.stderr.pipe(process.stderr)
-//     child.on('close', (code) => { code ? reject(child.stderr) : resolve(child.stdout) })
-//   })
-// }
 
 run()
