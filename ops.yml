@@ -1,6 +1,6 @@
 version: "1"
 commands:
-  - name: setup-aws-eks-ec2-asg-cdk:0.1.7
+  - name: setup-aws-eks-ec2-asg-cdk:0.1.8
     run: ./node_modules/.bin/ts-node /ops/src/setup.ts
     description: "setup an environment"
     env:
