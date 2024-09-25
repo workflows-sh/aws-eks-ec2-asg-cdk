@@ -35,7 +35,8 @@ export default class Registry extends cdk.Stack {
 
     const repository = new ecr.Repository(this, `${this.repo}-${this.key}`, {
       repositoryName: `${this.repo}-${this.key}`,
-      removalPolicy: cdk.RemovalPolicy.DESTROY
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      emptyOnDelete: true,
     })
 
     this.repository = repository
