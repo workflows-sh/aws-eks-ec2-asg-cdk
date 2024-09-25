@@ -47,7 +47,7 @@ export default class Cluster extends cdk.Stack {
 
     // todo @kc make AZ a StackProp
     const vpc = new ec2.Vpc(this, `${this.id}-vpc`, {
-      cidr: '10.0.0.0/16',
+      ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),
       natGateways: 1,
       maxAzs: 3,
       subnetConfiguration: [
