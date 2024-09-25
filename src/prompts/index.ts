@@ -18,8 +18,8 @@ export function stackRepoPrompt () {
     } > ({
         type: 'list',
         name: 'STACK_REPO',
-        choices: ['sample-expressjs-aws-eks-ec2-asg-cdk'],
-        default: 'sample-expressjs-aws-eks-ec2-asg-cdk',
+        choices: ['sample-expressjs-app'],
+        default: 'sample-expressjs-app',
         message: 'What is the name of the application repo?',
     })
 }

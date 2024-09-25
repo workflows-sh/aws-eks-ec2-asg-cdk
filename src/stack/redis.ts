@@ -44,7 +44,7 @@ class RedisCluster extends Construct {
         securityGroup.securityGroupId
       ]
     });
-  
+
   }
 
 }

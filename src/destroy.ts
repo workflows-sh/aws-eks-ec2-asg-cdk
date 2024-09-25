@@ -3,7 +3,7 @@ import { Exec, pexec, Sleep } from './utils'
 
 async function run() {
 
-  const STACK_TYPE = process.env.STACK_TYPE || 'aws-eks-ec2-asg';
+  const STACK_TYPE = process.env.STACK_TYPE || 'aws-eks-stack';
 
   const { STACK_ENV } = await ux.prompt<{
     STACK_ENV: string
@@ -35,7 +35,7 @@ async function run() {
     }>({
       type: 'input',
       name: 'STACK_REPO',
-      default: 'sample-expressjs-aws-eks-ec2-asg-cdk',
+      default: 'sample-expressjs-app',
       message: 'What is the name of the application repo?'
     }))
   }
