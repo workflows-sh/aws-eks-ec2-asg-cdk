@@ -87,7 +87,8 @@ export default class Cluster extends cdk.Stack {
       defaultCapacityInstance: ec2.InstanceType.of(ec2.InstanceClass.M5, ec2.InstanceSize.XLARGE),
       version: eks.KubernetesVersion.V1_30,
       kubectlLayer: new KubectlV30Layer(this, 'kubectl'),
-      mastersRole: new iam.Role(this, 'MastersRole', { assumedBy: new iam.AccountRootPrincipal() })
+      mastersRole: new iam.Role(this, 'MastersRole', { assumedBy: new iam.AccountRootPrincipal() }),
+      clusterName: `${this.id}`,
     });
 
     const rootVolume: autoscaling.BlockDevice = {
