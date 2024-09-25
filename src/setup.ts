@@ -14,10 +14,11 @@ async function run() {
   const { STACK_ENV } = await ux.prompt<{
     STACK_ENV: string
   }>({
-      type: 'input',
+      type: 'list',
       name: 'STACK_ENV',
       default: 'dev',
-      message: 'What is the name of the environment?'
+      message: 'What is the name of the environment?',
+      choices: ['dev', 'stg', 'prd', 'all']
     })
 
   const { STACK_REPO } = await ux.prompt<{
