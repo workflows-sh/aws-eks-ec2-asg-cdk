@@ -43,7 +43,7 @@ export default class Service extends cdk.Stack {
   public readonly vpc: ec2.Vpc
   public readonly cluster: eks.Cluster
   public readonly registry: ecr.Repository
-  public readonly db: rds.ServerlessCluster
+  public readonly db: rds.ServerlessCluster | undefined
   public readonly mq: sqs.Queue
   public readonly redis: any | undefined // todo @kc - fix this
 
@@ -59,7 +59,7 @@ export default class Service extends cdk.Stack {
       throw new Error('You must provide a Registry for Service')
     }
     if (!props?.db) {
-      throw new Error('You must provide a db for Service')
+      console.log('WARN: There is no DB for Service')
     }
     if (!props?.redis) {
       throw new Error('You must provide a redis for Service')
@@ -86,10 +86,7 @@ export default class Service extends cdk.Stack {
 
   async initialize() {
 
-    const CLUSTER_VAULT = sm.Secret.fromSecretAttributes(this, 'host', {
-      secretArn: this.db?.secret?.secretArn
-    } as sm.SecretAttributes);
-
+    let dbSecrets = {}
     let secrets = {}
     const decode = (str: string): string => Buffer.from(str, 'base64').toString('binary');
 
@@ -102,19 +99,28 @@ export default class Service extends cdk.Stack {
         secrets[index] = e
       }
     } catch (e) {
-      //console.log('There was an error fetching secrets from the cluster vault:', e)
+      console.log('There was an error fetching secrets from the cluster vault:', e)
+    }
+
+    if (this.db) {
+      const dbVault = sm.Secret.fromSecretAttributes(this, 'host', {
+        secretArn: this.db?.secret?.secretArn
+      } as sm.SecretAttributes);
+
+      dbSecrets = {
+        DB_HOST: dbVault.secretValueFromJson('host').toString(),
+        DB_PORT: dbVault.secretValueFromJson('port').toString(),
+        DB_USER: dbVault.secretValueFromJson('username').toString(),
+      }
     }
 
     const environment = Object.assign({
       PORT: "3000",
-      DB_HOST: CLUSTER_VAULT.secretValueFromJson('host').toString(),
-      DB_PORT: CLUSTER_VAULT.secretValueFromJson('port').toString(),
-      DB_USER: CLUSTER_VAULT.secretValueFromJson('username').toString(),
       REDIS_HOST: this.redis?.cluster?.attrRedisEndpointAddress,
       REDIS_PORT: this.redis?.cluster?.attrRedisEndpointPort,
       MQ_URL: this.mq?.queueUrl,
       MQ_NAME: this.mq?.queueName,
-    }, { ...secrets })
+    }, { ...dbSecrets, ...secrets })
 
     const env = Object.keys(environment).map((e) => {
       return { name: e, value: environment[e] }
