@@ -29,13 +29,14 @@ export default class Registry extends cdk.Stack {
     this.org = props?.org ?? 'cto-ai'
     this.env = props?.env ?? 'dev'
     this.key = props?.key ?? 'aws-eks-ec2-asg'
-    this.repo = props?.repo ?? 'sample-app'
+    this.repo = props?.repo ?? 'sample-expressjs-app'
     this.tag = props?.tag ?? 'main'
     this.entropy = props?.entropy ?? '01012022'
 
     const repository = new ecr.Repository(this, `${this.repo}-${this.key}`, {
       repositoryName: `${this.repo}-${this.key}`,
-      removalPolicy: cdk.RemovalPolicy.DESTROY
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      emptyOnDelete: true,
     })
 
     this.repository = repository

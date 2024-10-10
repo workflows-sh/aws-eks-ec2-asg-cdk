@@ -4,7 +4,7 @@
 FROM registry.cto.ai/official_images/node:2.7.4-12.13.1-buster-slim
 RUN mkdir -p /usr/local/nvm
 ENV NVM_DIR /usr/local/nvm
-ENV NODE_VERSION 16.19.1
+ENV NODE_VERSION 22.8.0
 
 RUN apt-get update && \
     apt-get install -y \
@@ -32,7 +32,7 @@ RUN dpkg -i session-manager-plugin.deb
 
 # https://github.com/aws/aws-cli/issues/6920
 # RUN curl -LOs "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-RUN curl -LOs https://dl.k8s.io/release/v1.23.6/bin/linux/amd64/kubectl
+RUN curl -LOs https://dl.k8s.io/release/v1.31.0/bin/linux/amd64/kubectl
 RUN install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
 # gh setup

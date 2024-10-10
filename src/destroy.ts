@@ -8,10 +8,11 @@ async function run() {
   const { STACK_ENV } = await ux.prompt<{
     STACK_ENV: string
   }>({
-    type: 'input',
+    type: 'list',
     name: 'STACK_ENV',
     default: 'dev',
-    message: 'What is the name of the environment?'
+    message: 'What is the name of the environment?',
+    choices: ['dev', 'stg', 'prd', 'all']
   })
 
   const doraController = 'dora-controller'
@@ -35,7 +36,7 @@ async function run() {
     }>({
       type: 'input',
       name: 'STACK_REPO',
-      default: 'sample-expressjs-aws-eks-ec2-asg-cdk',
+      default: 'sample-expressjs-app',
       message: 'What is the name of the application repo?'
     }))
   }
@@ -65,8 +66,8 @@ async function run() {
     return console.log('Please try again with environment set to <dev|stg|prd|all>')
   }
 
-  sdk.log(`📦 Setting up the stack`)
-  if (OPERATION === doraController) {
+  try {
+    sdk.log(`📦 Setting up the stack`)
     const STATE_PREFIX = `${STACK_ENV}_${STACK_TYPE}`.replace(/-/g, '_').toUpperCase()
     const BOOT_STATE_KEY = `${STACK_ENV}-${STACK_TYPE}`
     const BOOT_STATE = process?.env[`${STATE_PREFIX}_STATE`] || ''
@@ -74,34 +75,46 @@ async function run() {
 
     const bootStateKeys = Object.keys(BOOT_CONFIG[BOOT_STATE_KEY!])
     const cmd = bootStateKeys
-      .find((k) => { return k.indexOf('ConfigCommand') > -1 })
+        .find((k) => { return k.indexOf('ConfigCommand') > -1 })
 
     console.log(`\n🔐 Configuring access to ${ux.colors.white(STACK_ENV)} cluster`)
     await Exec(BOOT_CONFIG[BOOT_STATE_KEY!][cmd!], process.env)
-      .catch(err => { throw err })
+        .catch(err => { throw err })
 
     console.log(`\n⚡️ Confirming connection to ${ux.colors.white(STACK_ENV)} cluster:`)
     await Exec('kubectl get nodes')
-      .catch(err => { throw err })
+        .catch(err => { throw err })
 
     const getKubeConfig = await pexec('cat ~/.kube/config')
     process.env.KUBE_CONFIG = getKubeConfig.stdout;
-    await Exec('kubectl get ns')
-      .catch(err => { throw err })
 
-    const clusterArnKey = bootStateKeys
-      .find((k) => { return k.indexOf('ClusterArn') > -1 })
-    process.env.CLUSTER_ARN = BOOT_CONFIG[BOOT_STATE_KEY!][clusterArnKey!]
+    if (OPERATION === doraController) {
+        await Exec('kubectl get ns')
+          .catch(err => { throw err })
 
-    const kubectlRoleArnKey = bootStateKeys
-      .find((k) => { return k.indexOf('ClusterKubectlRoleArn') > -1 })
-    process.env.KUBECTL_ROLE_URN = BOOT_CONFIG[BOOT_STATE_KEY!][kubectlRoleArnKey!]
+        const clusterArnKey = bootStateKeys
+          .find((k) => { return k.indexOf('ClusterArn') > -1 })
+        process.env.CLUSTER_ARN = BOOT_CONFIG[BOOT_STATE_KEY!][clusterArnKey!]
 
-    const kubectlProviderRoleArnKey = bootStateKeys
-      .find((k) => { return k.indexOf('ClusterKubectlProviderHandlerRole') > -1 })
-    process.env.KUBECTL_PROVIDER_ROLE_URN = BOOT_CONFIG[BOOT_STATE_KEY!][kubectlProviderRoleArnKey!]
+        const kubectlRoleArnKey = bootStateKeys
+          .find((k) => { return k.indexOf('ClusterKubectlRoleArn') > -1 })
+        process.env.KUBECTL_ROLE_URN = BOOT_CONFIG[BOOT_STATE_KEY!][kubectlRoleArnKey!]
+
+        const kubectlProviderRoleArnKey = bootStateKeys
+          .find((k) => { return k.indexOf('ClusterKubectlProviderHandlerRole') > -1 })
+        process.env.KUBECTL_PROVIDER_ROLE_URN = BOOT_CONFIG[BOOT_STATE_KEY!][kubectlProviderRoleArnKey!]
+    }
+
+    if (OPERATION === 'cluster') {
+        console.log('\nRemoving hello world application from cluster...')
+        await Exec('kubectl delete -f src/kubectl/hello-world/')
+            .catch(err => console.log(err))
+    }
+  } catch (e) {
+    console.log('\nThere was an error connecting to the cluster directly. Continuing...')
   }
 
+  console.log('\nDestroying the stack...')
   await Exec(`./node_modules/.bin/cdk destroy -f -e true ${STACKS[STACK_ENV].reverse().join(' ')}`, {
     env: {
       ...process.env,

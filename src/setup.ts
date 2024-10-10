@@ -14,10 +14,11 @@ async function run() {
   const { STACK_ENV } = await ux.prompt<{
     STACK_ENV: string
   }>({
-      type: 'input',
+      type: 'list',
       name: 'STACK_ENV',
       default: 'dev',
-      message: 'What is the name of the environment?'
+      message: 'What is the name of the environment?',
+      choices: ['dev', 'stg', 'prd', 'all']
     })
 
   const { STACK_REPO } = await ux.prompt<{
@@ -25,7 +26,7 @@ async function run() {
   }>({
       type: 'input',
       name: 'STACK_REPO',
-      default: 'sample-expressjs-aws-eks-ec2-asg-cdk',
+      default: 'sample-expressjs-app',
       message: 'What is the name of the application repo?'
     })
 

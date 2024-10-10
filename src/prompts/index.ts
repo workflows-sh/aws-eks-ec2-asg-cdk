@@ -6,9 +6,9 @@ export function stackEnvPrompt () {
     } > ({
         type: 'list',
         name: 'STACK_ENV',
-        choices: ['dev', 'stg', 'prd', 'all'],
         default: 'dev',
         message: 'What is the name of the environment?',
+        choices: ['dev', 'stg', 'prd', 'all']
     })
 }
 
@@ -18,8 +18,8 @@ export function stackRepoPrompt () {
     } > ({
         type: 'list',
         name: 'STACK_REPO',
-        choices: ['sample-expressjs-aws-eks-ec2-asg-cdk'],
-        default: 'sample-expressjs-aws-eks-ec2-asg-cdk',
+        choices: ['sample-expressjs-app'],
+        default: 'sample-expressjs-app',
         message: 'What is the name of the application repo?',
     })
 }
