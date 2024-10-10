@@ -1,27 +1,26 @@
 version: "1"
 commands:
-  - # Name of the resulting workflow
-    name: setup-aws-eks-stack:0.2.0
+  - name: setup-aws-eks-ec2-asg-cdk:0.1.8
     run: ./node_modules/.bin/ts-node /ops/src/setup.ts
     description: "setup an environment"
     env:
       static:
-        - STACK_TYPE=aws-eks-stack
+        - STACK_TYPE=aws-eks-ec2-asg-cdk
         - AWS_REGION=us-west-1
       secrets:
         - AWS_ACCESS_KEY_ID
         - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
       configs:
-        - DEV_AWS_EKS_STACK_STATE
-        - STG_AWS_EKS_STACK_STATE
-        - PRD_AWS_EKS_STACK_STATE
-  - name: deploy-aws-eks-stack:0.2.0
+        - DEV_AWS_EKS_EC2_ASG_CDK_STATE
+        - STG_AWS_EKS_EC2_ASG_CDK_STATE
+        - PRD_AWS_EKS_EC2_ASG_CDK_STATE
+  - name: deploy-aws-eks-ec2-asg-cdk:0.1.7
     run: ./node_modules/.bin/ts-node /ops/src/deploy.ts
     description: "deploy to an environment"
     env:
       static:
-        - STACK_TYPE=aws-eks-stack
+        - STACK_TYPE=aws-eks-ec2-asg-cdk
         - AWS_REGION=us-west-1
       secrets:
         - AWS_ACCESS_KEY_ID
@@ -32,68 +31,68 @@ commands:
         - DORA_AUTH_TEAM
         - DORA_AUTH_TOKEN
       configs:
-        - DEV_AWS_EKS_STACK_STATE
-        - STG_AWS_EKS_STACK_STATE
-        - PRD_AWS_EKS_STACK_STATE
+        - DEV_AWS_EKS_EC2_ASG_CDK_STATE
+        - STG_AWS_EKS_EC2_ASG_CDK_STATE
+        - PRD_AWS_EKS_EC2_ASG_CDK_STATE
         - DORA_CONTROLLER_RELEASE_TAG
         - DORA_CONTROLLER_REPO
         - DORA_WRITER_RELEASE_TAG
         - DORA_WRITER_REPO
-  - name: destroy-aws-eks-stack:0.2.0
+  - name: destroy-aws-eks-ec2-asg-cdk:0.1.4
     run: ./node_modules/.bin/ts-node /ops/src/destroy.ts
     description: "destroy an environment"
     env:
       static:
-        - STACK_TYPE=aws-eks-stack
+        - STACK_TYPE=aws-eks-ec2-asg-cdk
         - AWS_REGION=us-west-1
       secrets:
         - AWS_ACCESS_KEY_ID
         - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
       configs:
-        - DEV_AWS_EKS_STACK_STATE
-        - STG_AWS_EKS_STACK_STATE
-        - PRD_AWS_EKS_STACK_STATE
-  - name: ssh-aws-eks-stack:0.2.0
+        - DEV_AWS_EKS_EC2_ASG_CDK_STATE
+        - STG_AWS_EKS_EC2_ASG_CDK_STATE
+        - PRD_AWS_EKS_EC2_ASG_CDK_STATE
+  - name: ssh-aws-eks-ec2-asg-cdk:0.1.0
     run: ./node_modules/.bin/ts-node /ops/src/ssh.ts
     description: "connect to bastion with ssh"
     env:
       static:
-        - STACK_TYPE=aws-eks-stack
+        - STACK_TYPE=aws-eks-ec2-asg-cdk
         - AWS_REGION=us-west-1
       secrets:
         - AWS_ACCESS_KEY_ID
         - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
-  - name: tunnel-aws-eks-stack:0.2.0
+  - name: tunnel-aws-eks-ec2-asg-cdk:0.1.0
     run: ./node_modules/.bin/ts-node /ops/src/tunnel.ts
     description: "connect to bastion with ssh"
     env:
       static:
-        - STACK_TYPE=aws-eks-stack
+        - STACK_TYPE=aws-eks-ec2-asg-cdk
         - AWS_REGION=us-west-1
       secrets:
         - AWS_ACCESS_KEY_ID
         - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
-  - name: vault-aws-eks-stack:0.2.0
+  - name: vault-aws-eks-ec2-asg-cdk:0.1.1
     run: ./node_modules/.bin/ts-node /ops/src/vault.ts
     description: "manage secrets vault"
     env:
       static:
-        - STACK_TYPE=aws-eks-stack
+        - STACK_TYPE=aws-eks-ec2-asg-cdk
         - AWS_REGION=us-west-1
       secrets:
         - AWS_ACCESS_KEY_ID
         - AWS_SECRET_ACCESS_KEY
         - AWS_ACCOUNT_NUMBER
       configs:
-        - DEV_AWS_EKS_STACK_STATE
-        - STG_AWS_EKS_STACK_STATE
-        - PRD_AWS_EKS_STACK_STATE
+        - DEV_AWS_EKS_EC2_ASG_CDK_STATE
+        - STG_AWS_EKS_EC2_ASG_CDK_STATE
+        - PRD_AWS_EKS_EC2_ASG_CDK_STATE
     help:
       usage: ops run vault <sub-cmd> <--key> <--value>
-      arguments:
+      arguments: 
         init: 'init the environments vault'
         set: 'set a key in the enviroment vault'
         ls: 'list keys in the environment vault'

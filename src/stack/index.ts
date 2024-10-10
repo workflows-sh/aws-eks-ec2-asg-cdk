@@ -25,7 +25,7 @@ export class Stack{
   constructor(props?: StackProps) {
     this.org = props?.org ?? 'cto-ai'
     this.env = props?.env ?? 'dev'
-    this.key = props?.key ?? 'aws-eks-stack'
+    this.key = props?.key ?? 'aws-eks-ec2-asg'
     this.repo = props?.repo ?? 'sample-expressjs-app'
     this.tag = props?.tag ?? 'main'
     this.entropy = props?.entropy ?? '01012022'
@@ -36,12 +36,12 @@ export class Stack{
 
     // create a shared ECR Registry
     const registry = new Registry(app, `${this.repo}-${this.key}`, {
-        org: this.org,
-        env: this.env,
-        key: this.key,
-        repo: this.repo,
-        tag: this.tag,
-        entropy: this.entropy
+      org: this.org,
+      env: this.env,
+      key: this.key,
+      repo: this.repo,
+      tag: this.tag,
+      entropy: this.entropy
     })
 
     // create each vpc, cluster & db

@@ -6,11 +6,11 @@ const pexec = util.promisify(oexec);
 
 async function run() {
 
-  const STACK_TYPE = process.env.STACK_TYPE || 'aws-eks-stack';
+  const STACK_TYPE = process.env.STACK_TYPE || 'aws-eks-ec2-asg';
   const STACK_TEAM = process.env.OPS_TEAM_NAME || 'private'
 
   sdk.log(`🛠  Loading the ${ux.colors.white(STACK_TYPE)} stack for the ${ux.colors.white(STACK_TEAM)}...`)
-
+  
   const { STACK_ENV } = await ux.prompt<{
     STACK_ENV: string
   }>({
@@ -59,7 +59,7 @@ async function run() {
   if(!STACKS[STACK_ENV].length) {
     return console.log('Please try again with environment set to <dev|stg|prd|all>')
   }
-
+  
   sdk.log(`\n📦 Setting up the ${ux.colors.white(STACK_TYPE)} ${ux.colors.white(STACK_ENV)} stack for ${ux.colors.white(STACK_TEAM)} team...`)
   await exec(`./node_modules/.bin/cdk bootstrap`, { env: process.env })
 
@@ -90,11 +90,11 @@ async function run() {
   }
 
   await exec(`./node_modules/.bin/cdk deploy ${STACKS[STACK_ENV].join(' ')} --outputs-file outputs.json`, {
-    env: {
-      ...process.env,
+    env: { 
+      ...process.env, 
       STACK_ENV: STACK_ENV,
-      STACK_TYPE: STACK_TYPE,
-      STACK_REPO: STACK_REPO,
+      STACK_TYPE: STACK_TYPE, 
+      STACK_REPO: STACK_REPO, 
       STACK_TAG: STACK_TAG
     }
   })
@@ -122,7 +122,7 @@ async function run() {
 
       const config = await pexec('cat ~/.kube/config')
       // console.log(config.stdout)
-
+      
       console.log(`\n⚡️ Confirming connection to ${ux.colors.white(cluster || 'cluster')}:`)
       await exec('kubectl get nodes')
         .catch(err => console.log(err))

@@ -3,7 +3,7 @@ import { Exec, pexec, Sleep } from './utils'
 
 async function run() {
 
-  const STACK_TYPE = process.env.STACK_TYPE || 'aws-eks-stack';
+  const STACK_TYPE = process.env.STACK_TYPE || 'aws-eks-ec2-asg';
 
   const { STACK_ENV } = await ux.prompt<{
     STACK_ENV: string

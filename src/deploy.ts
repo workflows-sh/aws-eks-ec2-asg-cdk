@@ -5,7 +5,7 @@ import { Exec, pexec, Sleep } from './utils'
 
 async function run() {
 
-  const STACK_TYPE = process.env.STACK_TYPE || 'aws-eks-stack';
+  const STACK_TYPE = process.env.STACK_TYPE || 'aws-eks-ec2-asg';
   const STACK_TEAM = process.env.OPS_TEAM_NAME || 'private'
 
   const { SRV_TYPE } = await ux.prompt<{
@@ -171,7 +171,7 @@ async function run() {
   const kubectlProviderRoleArnKey = bootStateKeys
     .find((k) => { return k.indexOf('ClusterKubectlProviderHandlerRole') > -1 })
   process.env.KUBECTL_PROVIDER_ROLE_URN = BOOT_CONFIG[BOOT_STATE_KEY!][kubectlProviderRoleArnKey!]
-
+  
   await Exec(`./node_modules/.bin/cdk deploy ${STACKS[STACK_ENV].join(' ')}`, {
     env: {
       ...process.env,

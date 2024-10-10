@@ -71,7 +71,7 @@ export default class Service extends cdk.Stack {
     this.id = id
     this.org = props?.org ?? 'cto-ai'
     this.env = props?.env ?? 'dev'
-    this.key = props?.key ?? 'aws-eks-stack'
+    this.key = props?.key ?? 'aws-eks-ec2-asg'
     this.repoOrg = props?.repoOrg ?? 'workflows-sh'
     this.repo = props?.repo ?? 'sample-expressjs-app'
     this.tag = props?.tag ?? 'main'
