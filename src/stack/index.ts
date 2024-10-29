@@ -26,7 +26,7 @@ export class Stack{
     this.org = props?.org ?? 'cto-ai'
     this.env = props?.env ?? 'dev'
     this.key = props?.key ?? 'aws-eks-ec2-asg'
-    this.repo = props?.repo ?? 'sample-expressjs-aws-eks-ec2-asg-cdk'
+    this.repo = props?.repo ?? 'sample-expressjs-app'
     this.tag = props?.tag ?? 'main'
     this.entropy = props?.entropy ?? '01012022'
   }
@@ -53,6 +53,8 @@ export class Stack{
       tag: this.tag,
       entropy: this.entropy
     });
+    dev.addDependency(registry)
+
     const stg = new Cluster(app, `stg-${this.key}`, {
       org: this.org,
       env: this.env,
@@ -61,6 +63,8 @@ export class Stack{
       tag: this.tag,
       entropy: this.entropy
     });
+    stg.addDependency(registry)
+
     const prd = new Cluster(app, `prd-${this.key}`, {
       org: this.org,
       env: this.env,
@@ -69,17 +73,21 @@ export class Stack{
       tag: this.tag,
       entropy: this.entropy
     });
+    prd.addDependency(registry)
 
     // deploy dora controller in dev cluster
     const devDora = new Dora(app, `dev-dora-controller-${this.key}`)
+    devDora.addDependency(dev)
     await devDora.initialize()
 
     // deploy dora controller in stg cluster
     const stgDora = new Dora(app, `stg-dora-controller-${this.key}`)
+    stgDora.addDependency(stg)
     await stgDora.initialize()
 
     // deploy dora controller in prd cluster
     const prdDora = new Dora(app, `prd-dora-controller-${this.key}`)
+    prdDora.addDependency(prd)
     await prdDora.initialize()
 
     // instantiate a service in dev cluster

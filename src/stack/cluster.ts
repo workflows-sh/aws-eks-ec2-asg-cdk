@@ -4,7 +4,7 @@ import * as ec2 from 'aws-cdk-lib/aws-ec2'
 import * as eks from 'aws-cdk-lib/aws-eks'
 import * as rds from 'aws-cdk-lib/aws-rds'
 import * as sqs from 'aws-cdk-lib/aws-sqs'
-import { KubectlV27Layer } from '@aws-cdk/lambda-layer-kubectl-v27';
+import { KubectlV30Layer } from '@aws-cdk/lambda-layer-kubectl-v30';
 import * as elasticache from './redis'
 import * as autoscaling from 'aws-cdk-lib/aws-autoscaling'
 import { Construct } from 'constructs';
@@ -41,13 +41,13 @@ export default class Cluster extends cdk.Stack {
     this.org = props?.org ?? 'cto-ai'
     this.env = props?.env ?? 'dev'
     this.key = props?.key ?? 'aws-eks-ec2-asg'
-    this.repo = props?.repo ?? 'sample-expressjs-aws-eks-ec2-asg-cdk'
+    this.repo = props?.repo ?? 'sample-expressjs-app'
     this.tag = props?.tag ?? 'main'
     this.entropy = props?.entropy ?? '01012022'
 
     // todo @kc make AZ a StackProp
     const vpc = new ec2.Vpc(this, `${this.id}-vpc`, {
-      cidr: '10.0.0.0/16',
+      ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),
       natGateways: 1,
       maxAzs: 3,
       subnetConfiguration: [
@@ -85,9 +85,10 @@ export default class Cluster extends cdk.Stack {
       vpc: vpc,
       defaultCapacity: 0,
       defaultCapacityInstance: ec2.InstanceType.of(ec2.InstanceClass.M5, ec2.InstanceSize.XLARGE),
-      version: eks.KubernetesVersion.V1_27,
-      kubectlLayer: new KubectlV27Layer(this, 'kubectl'),
-      mastersRole: new iam.Role(this, 'MastersRole', { assumedBy: new iam.AccountRootPrincipal() })
+      version: eks.KubernetesVersion.V1_30,
+      kubectlLayer: new KubectlV30Layer(this, 'kubectl'),
+      mastersRole: new iam.Role(this, 'MastersRole', { assumedBy: new iam.AccountRootPrincipal() }),
+      clusterName: `${this.id}`,
     });
 
     const rootVolume: autoscaling.BlockDevice = {
@@ -109,7 +110,7 @@ export default class Cluster extends cdk.Stack {
       blockDevices: [rootVolume],
       instanceType: ec2.InstanceType.of(ec2.InstanceClass.M5, ec2.InstanceSize.XLARGE),
       machineImage: new eks.EksOptimizedImage({
-        kubernetesVersion: '1.21',
+        kubernetesVersion: '1.30',
         nodeType: eks.NodeType.STANDARD  // without this, incorrect SSM parameter for AMI is resolved
       }),
       updatePolicy: autoscaling.UpdatePolicy.rollingUpdate()
