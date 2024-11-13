@@ -45,7 +45,6 @@ export default class Cluster extends cdk.Stack {
     this.tag = props?.tag ?? 'main'
     this.entropy = props?.entropy ?? '01012022'
 
-    // todo @kc make AZ a StackProp
     const vpc = new ec2.Vpc(this, `${this.id}-vpc`, {
       ipAddresses: ec2.IpAddresses.cidr('10.0.0.0/16'),
       natGateways: 1,
@@ -118,23 +117,30 @@ export default class Cluster extends cdk.Stack {
 
     cluster.connectAutoScalingGroupCapacity(onDemandASG, {});
 
-    const dbSecurityGroup = new ec2.SecurityGroup(this, `${this.id}-db-sg`, {
-      vpc: vpc,
-      allowAllOutbound: true,
-      description: `db security group for ${this.id} db`,
-      securityGroupName: `${this.id}-db-sg`
-    });
-    dbSecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(3306), 'MySQL access');
-
-    const db = new rds.ServerlessCluster(this, `${this.id}-db`, {
-      vpc: vpc,
-      defaultDatabaseName: `${this.env}`,
-      engine: rds.DatabaseClusterEngine.AURORA_MYSQL,
-      scaling: { autoPause: cdk.Duration.seconds(0) },
-      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
-      securityGroups: [dbSecurityGroup],
-      credentials: rds.Credentials.fromGeneratedSecret('root')
-    });
+    /**
+     * Uncomment the following section to provision a RDS Serverless Aurora MySQL cluster
+     */
+    // const dbSecurityGroup = new ec2.SecurityGroup(this, `${this.id}-db-sg`, {
+    //   vpc: vpc,
+    //   allowAllOutbound: true,
+    //   description: `db security group for ${this.id} db`,
+    //   securityGroupName: `${this.id}-db-sg`
+    // });
+    // dbSecurityGroup.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(3306), 'MySQL access');
+    //
+    // const db = new rds.ServerlessCluster(this, `${this.id}-db`, {
+    //   vpc: vpc,
+    //   defaultDatabaseName: `${this.env}`,
+    //   engine: rds.DatabaseClusterEngine.AURORA_MYSQL,
+    //   scaling: { autoPause: cdk.Duration.seconds(0) },
+    //   vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
+    //   securityGroups: [dbSecurityGroup],
+    //   credentials: rds.Credentials.fromGeneratedSecret('root')
+    // });
+    //
+    // this.db = db;
+    //
+    // new cdk.CfnOutput(this, `${this.id}DbArn`, { value: this.db?.clusterArn });
 
     const redis = new elasticache.Cluster(this, `${this.id}-redis`, { vpc: vpc });
     const mq = new sqs.Queue(this, `${this.id}-sqs`);
@@ -143,18 +149,17 @@ export default class Cluster extends cdk.Stack {
     this.cluster = cluster;
     this.bastion = bastion;
     this.redis = redis;
-    this.db = db;
     this.mq = mq;
 
-    new cdk.CfnOutput(this, `${this.id}VpcId`, { value: this.vpc.vpcId })
-    new cdk.CfnOutput(this, `${this.id}ClusterArn`, { value: this.cluster.clusterArn })
+    new cdk.CfnOutput(this, `${this.id}VpcId`, { value: this.vpc.vpcId });
+    new cdk.CfnOutput(this, `${this.id}ClusterArn`, { value: this.cluster.clusterArn });
+
     if (this.cluster.kubectlRole) {
-      new cdk.CfnOutput(this, `${this.id}ClusterKubectlRoleArn`, { value: this.cluster.kubectlRole.roleArn })
+      new cdk.CfnOutput(this, `${this.id}ClusterKubectlRoleArn`, { value: this.cluster.kubectlRole.roleArn });
     }
+
     const kubectlProvider = this.cluster.stack.node.tryFindChild('@aws-cdk--aws-eks.KubectlProvider') as eks.KubectlProvider;
     new cdk.CfnOutput(this, 'ClusterKubectlProviderHandlerRole', { value: kubectlProvider.handlerRole.roleArn });
-    new cdk.CfnOutput(this, `${this.id}DbArn`, { value: this.db?.clusterArn })
-
   }
 }
 
